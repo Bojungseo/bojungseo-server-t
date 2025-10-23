@@ -6,9 +6,10 @@ const fs = require('fs');
 const crypto = require('crypto'); // ✨ UUID 생성을 위한 crypto 모듈 추가
 const path = require('path'); // ✨ 프론트엔드 정적 파일 서빙용
 
+
 // --- 설정 ---
 const PORT = process.env.PORT || 4000;
-const credentials = require('./google-credentials.json');
+const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON || '{}');
 const AUTH_SPREADSHEET_ID = '1yfPB1mhLnYP59SIRJNsPjiug-3glypQcB1zu4ODXQVs';     // 'my-auth-database'의 ID
 const PATIENT_SPREADSHEET_ID = '1R7sNFwF0g-_ii6wNxol3-1xBQUbxnioE3ST70REvpNM'; // 'patients' 스프레드시트의 ID
 const PATIENT2_SPREADSHEET_ID = '1vsnRcJ4JxO3xwmecWX8pAd6Mr_Wpxf-eyzpkcxb9mBI'; // ✨ 신규 ID
@@ -76,9 +77,9 @@ app.use(express.json());
 const frontendDistPath = path.join(__dirname, '../my-vite-app/dist'); // ← 경로 수정
 app.use(express.static(frontendDistPath));
 
-// 모든 미정의 경로는 프론트엔드 index.html로 포워딩
-app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api/')) return next(); // API 요청은 백엔드 처리
+// Express 5.x 호환: '/*' 사용
+app.get('/*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
     res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
@@ -261,7 +262,7 @@ app.get('/api/search-patients-2', async (req, res) => {
 });
 
 // =================================================================
-// 서버 시작 로직
+// 서버 시작
 // =================================================================
 function formatBytes(bytes, decimals = 2) {
     if (!bytes || bytes === 0) return '0 Bytes';
