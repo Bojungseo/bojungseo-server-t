@@ -43,11 +43,9 @@ async function loadAndCachePatientData(doc, cacheArray) {
             const sheetData = rows.map(row => ({ 
                 ...row.toObject(), 
                 보험회사: sheet.title, 
-                // ✨ UUID 기반의 절대적으로 고유한 ID 생성
-                id: crypto.randomUUID(), 
+                id: crypto.randomUUID(), // ✨ UUID 기반 ID 생성
             }));
             allPatients.push(...sheetData);
-            // 각 시트별 캐싱 건수 출력
             console.log(`  ✅ "${sheet.title}" 시트에서 ${sheetData.length}건 캐싱 완료.`);
         }
         
@@ -67,7 +65,6 @@ async function loadAndCachePatientData(doc, cacheArray) {
 // =================================================================
 // Express 앱 설정 및 API 라우트
 // =================================================================
-
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -76,7 +73,7 @@ app.use(express.json());
 // ✨ 프론트엔드 정적 파일 서빙
 // ================================================================
 // Vite 빌드 결과(dist 폴더)를 서빙
-const frontendDistPath = path.join(__dirname, '../my-vite-app/dist');
+const frontendDistPath = path.join(__dirname, '../my-vite-app/dist'); // ← 경로 수정
 app.use(express.static(frontendDistPath));
 
 // 모든 미정의 경로는 프론트엔드 index.html로 포워딩
@@ -264,9 +261,8 @@ app.get('/api/search-patients-2', async (req, res) => {
 });
 
 // =================================================================
-// 서버 시작 로직 (메모리 측정 기능 포함)
+// 서버 시작 로직
 // =================================================================
-
 function formatBytes(bytes, decimals = 2) {
     if (!bytes || bytes === 0) return '0 Bytes';
     const k = 1024;
