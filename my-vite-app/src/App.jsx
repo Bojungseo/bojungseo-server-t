@@ -161,16 +161,16 @@ function RequestIdModal({ onClose, onRegisterSuccess }) {
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="신청할 아이디" className="w-full px-3 py-2 border rounded-md" required />
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="신청자 이름" className="w-full px-3 py-2 border rounded-md" required />
             </div>
             <div className="mb-4">
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="사용할 비밀번호" className="w-full px-3 py-2 border rounded-md" required />
             </div>
             <div className="mb-4">
-              <input type="text" value={본부} onChange={(e) => set본부(e.target.value)} placeholder="본부 입력 (필수)" className="w-full px-3 py-2 border rounded-md" required />
+              <input type="text" value={본부} onChange={(e) => set본부(e.target.value)} placeholder="본부 입력 [예) 320본부]" className="w-full px-3 py-2 border rounded-md" required />
             </div>
             <div className="mb-6">
-              <input type="text" value={지사} onChange={(e) => set지사(e.target.value)} placeholder="지사 입력 (필수)" className="w-full px-3 py-2 border rounded-md" required />
+              <input type="text" value={지사} onChange={(e) => set지사(e.target.value)} placeholder="지사 입력 [예) 메테오지사]" className="w-full px-3 py-2 border rounded-md" required />
             </div>
             <div className="flex justify-between">
               <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">아이디 신청하기</button>
