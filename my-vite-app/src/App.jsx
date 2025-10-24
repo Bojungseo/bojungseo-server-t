@@ -306,7 +306,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
         {/* --- 상단 헤더 --- */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">대시보드</h1>
+                <h1 className="text-3xl font-bold">보정서 설계사 지원</h1>
                 <button onClick={onLogout} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">로그아웃</button>
             </div>
         </div>
@@ -671,7 +671,7 @@ function MenuPage1({ onGoToDashboard }) {
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">조건 검색 1 (기존 DB)</h1>
+                        <h1 className="text-3xl font-bold">예외질환 검색(유병자)</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                             대시보드로 돌아가기
                         </button>
@@ -684,7 +684,7 @@ function MenuPage1({ onGoToDashboard }) {
                                 type="text"
                                 value={keyword}
                                 onChange={(e) => setKeyword(e.target.value)}
-                                placeholder="1차 검색: 병명, 특이사항 키워드"
+                                placeholder="1차 검색: 병명 키워드"
                                 disabled={filtersEnabled || loading} // ✨ 검색 완료 시 비활성화
                                 className={`flex-grow px-3 py-2 border rounded-md ${filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
                             />
@@ -931,7 +931,7 @@ function MenuPage2({ onGoToDashboard }) {
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">조건 검색 2 (신규 DB)</h1>
+                        <h1 className="text-3xl font-bold">예외질환 검색(건강고지)</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                             대시보드로 돌아가기
                         </button>
@@ -944,7 +944,7 @@ function MenuPage2({ onGoToDashboard }) {
                                 type="text"
                                 value={keyword}
                                 onChange={(e) => setKeyword(e.target.value)}
-                                placeholder="1차 검색: 병명, 특이사항 키워드"
+                                placeholder="1차 검색: 병명 키워드"
                                 disabled={filtersEnabled || loading}
                                 className={`flex-grow px-3 py-2 border rounded-md ${filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
                             />
@@ -1072,7 +1072,7 @@ function SettingsPage({ onGoToDashboard }) {
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">설정 페이지</h1>
+                        <h1 className="text-3xl font-bold">예정이율 체크</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                             대시보드로 돌아가기
                         </button>
@@ -1094,7 +1094,7 @@ function ExtraMenu1({ onGoToDashboard }) {
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">추가 메뉴 1</h1>
+                        <h1 className="text-3xl font-bold">화재보험산정</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                             대시보드로 돌아가기
                         </button>
@@ -1115,7 +1115,7 @@ function ExtraMenu2({ onGoToDashboard }) {
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">추가 메뉴 2</h1>
+                        <h1 className="text-3xl font-bold">원수사연락망</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                             대시보드로 돌아가기
                         </button>
@@ -1136,7 +1136,7 @@ function ExtraMenu3({ onGoToDashboard }) {
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">추가 메뉴 3</h1>
+                        <h1 className="text-3xl font-bold">질병 인수데이터</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                             대시보드로 돌아가기
                         </button>
