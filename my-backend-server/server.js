@@ -1,3 +1,7 @@
+// ================================================================
+// server.js (Docker + Vite + Express + Google Sheets 완전 통합 버전)
+// ================================================================
+
 const express = require('express');
 const cors = require('cors');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
@@ -5,7 +9,6 @@ const { JWT } = require('google-auth-library');
 const fs = require('fs');
 const crypto = require('crypto'); // ✨ UUID 생성을 위한 crypto 모듈 추가
 const path = require('path'); // ✨ 프론트엔드 정적 파일 서빙용
-
 
 // --- 설정 ---
 const PORT = process.env.PORT || 4000;
@@ -18,7 +21,10 @@ const PATIENT2_SPREADSHEET_ID = '1vsnRcJ4JxO3xwmecWX8pAd6Mr_Wpxf-eyzpkcxb9mBI'; 
 const serviceAccountAuth = new JWT({
   email: credentials.client_email,
   key: credentials.private_key,
-  scopes: [ 'https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file' ],
+  scopes: [ 
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file'
+  ],
 });
 
 const authDoc = new GoogleSpreadsheet(AUTH_SPREADSHEET_ID, serviceAccountAuth);
@@ -73,11 +79,12 @@ app.use(express.json());
 // ================================================================
 // ✨ 프론트엔드 정적 파일 서빙
 // ================================================================
-// Vite 빌드 결과(dist 폴더)를 서빙
-const frontendDistPath = path.join(__dirname, '../my-vite-app/dist'); // ← 경로 수정
+// Docker 컨테이너 내 구조 기준
+// (my-vite-app/dist → my-backend-server/dist 로 복사됨)
+const frontendDistPath = path.join(__dirname, './dist');
 app.use(express.static(frontendDistPath));
 
-// Express 5.x 호환: '/*' 사용
+// SPA 대응 (API 이외 모든 경로는 index.html 반환)
 app.get('/*', (req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
     res.sendFile(path.join(frontendDistPath, 'index.html'));
