@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 // 백엔드 서버의 주소입니다.
-const BACKEND_URL = 'http://localhost:4000';
+const BACKEND_URL = '';
 
 // ===============================================
 // API 통신 함수 모음 (변경 없음)
