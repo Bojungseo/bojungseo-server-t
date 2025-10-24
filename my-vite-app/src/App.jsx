@@ -269,12 +269,12 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
         const isManager = user.grade === '최고 관리자';
         
         const allButtons = [
-            { label: '조건 검색 1 (기존 DB)', onClick: onGoToMenuPage1 },
-            { label: '조건 검색 2 (신규 DB)', onClick: onGoToMenuPage2 },
-            { label: '설정 페이지', onClick: onGoToSettings, managerOnly: true },
-            { label: '추가 메뉴 1', onClick: onGoToExtra1, managerOnly: true },
-            { label: '추가 메뉴 2', onClick: onGoToExtra2, managerOnly: true },
-            { label: '추가 메뉴 3', onClick: onGoToExtra3, managerOnly: true },
+            { label: '예외질환 검색(유병자)', onClick: onGoToMenuPage1 },
+            { label: '예외질환 검색(건강고지)', onClick: onGoToMenuPage2 },
+            { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
+            { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
+            { label: '원수사 연락망', onClick: onGoToExtra2, managerOnly: true },
+            { label: '질병인수 데이터', onClick: onGoToExtra3, managerOnly: true },
         ];
 
         return (
@@ -1115,7 +1115,7 @@ function ExtraMenu2({ onGoToDashboard }) {
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">원수사연락망</h1>
+                        <h1 className="text-3xl font-bold">원수사 연락망</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                             대시보드로 돌아가기
                         </button>
