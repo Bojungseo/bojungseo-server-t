@@ -11,7 +11,7 @@ WORKDIR /app
 # ===============================
 # 3️⃣ 백엔드 의존성 설치
 # ===============================
-COPY my-backend-server/package*.json ./my-backend-server/
+COPY my-backend-server/package.json ./my-backend-server/
 RUN cd my-backend-server && npm install
 
 # ===============================
