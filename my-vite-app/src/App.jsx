@@ -4,70 +4,87 @@ import React, { useState, useEffect, useCallback } from 'react';
 const BACKEND_URL = '';
 
 // ===============================================
-// API 통신 함수 모음 (변경 없음)
+// API 통신 함수 모음 (개별 승인/거절/수정/삭제 반영)
 // ===============================================
 const apiLogin = async (username, password) => {
     const response = await fetch(`${BACKEND_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || '로그인 실패');
-      return data;
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || '로그인 실패');
+    return data;
 };
+
 const apiRegister = async (username, password, 본부, 지사) => {
     const response = await fetch(`${BACKEND_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, 본부, 지사 }), // 본부, 지사 전송
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || '아이디 신청 실패');
-      return data;
+        body: JSON.stringify({ username, password, 본부, 지사 }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || '아이디 신청 실패');
+    return data;
 };
-const apiGetRequests = async () => {
+
+// ----------------------------
+// AdminPanelPage 관련 API
+// ----------------------------
+
+// 신청 아이디 목록 조회 (Pending Users)
+const apiFetchPendingUsers = async () => {
     const response = await fetch(`${BACKEND_URL}/api/requests`);
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || '신청 목록 조회 실패');
-    return data.requests;
+    return data.requests; // [{id, username, 본부, 지사}, ...]
 };
-const apiApproveRequest = async (requestId) => {
+
+// 승인된 사용자 목록 조회 (Approved Users)
+const apiFetchApprovedUsers = async () => {
+    const response = await fetch(`${BACKEND_URL}/api/users`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || '승인 사용자 목록 조회 실패');
+    return data.users; // [{id, username, grade, 본부, 지사}, ...]
+};
+
+// 신청 아이디 승인 (개별)
+const apiApproveUser = async (id) => {
     const response = await fetch(`${BACKEND_URL}/api/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId }),
+        body: JSON.stringify({ requestId: id }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || '승인 처리 실패');
     return data;
 };
-const apiRejectRequest = async (requestId) => {
+
+// 신청 아이디 거절 (개별)
+const apiRejectUser = async (id) => {
     const response = await fetch(`${BACKEND_URL}/api/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId }),
+        body: JSON.stringify({ requestId: id }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || '거절 처리 실패');
     return data;
 };
-const apiGetUsers = async () => {
-    const response = await fetch(`${BACKEND_URL}/api/users`);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || '사용자 목록 조회 실패');
-    return data.users;
-};
-const apiUpdateUser = async (userData) => {
+
+// 승인된 사용자 정보 수정 (개별)
+const apiUpdateUser = async ({ id, password, grade, 본부, 지사 }) => {
     const response = await fetch(`${BACKEND_URL}/api/update-user`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData), // { id, password, grade, 본부, 지사 }
+        body: JSON.stringify({ id, password, grade, 본부, 지사 }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || '사용자 정보 업데이트 실패');
     return data;
 };
+
+// 승인된 사용자 삭제 (개별)
 const apiDeleteUser = async (id) => {
     const response = await fetch(`${BACKEND_URL}/api/delete-user`, {
         method: 'POST',
@@ -79,13 +96,52 @@ const apiDeleteUser = async (id) => {
     return data;
 };
 
+// ----------------------------
+// 기존 요청/환자 검색 API 유지
+// ----------------------------
+const apiGetRequests = async () => {
+    const response = await fetch(`${BACKEND_URL}/api/requests`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || '신청 목록 조회 실패');
+    return data.requests;
+};
+
+const apiApproveRequest = async (requestId) => {
+    const response = await fetch(`${BACKEND_URL}/api/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || '승인 처리 실패');
+    return data;
+};
+
+const apiRejectRequest = async (requestId) => {
+    const response = await fetch(`${BACKEND_URL}/api/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || '거절 처리 실패');
+    return data;
+};
+
+const apiGetUsers = async () => {
+    const response = await fetch(`${BACKEND_URL}/api/users`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || '사용자 목록 조회 실패');
+    return data.users;
+};
+
 const apiSearchPatients = async (params) => {
     const query = new URLSearchParams(params).toString();
     const response = await fetch(`${BACKEND_URL}/api/search-patients?${query}`);
     const data = await response.json();
     if (!data.success) throw new Error(data.message || '환자 검색 실패');
     return data.patients;
-}
+};
 
 const apiSearchPatients2 = async (params) => {
     const query = new URLSearchParams(params).toString();
@@ -93,7 +149,8 @@ const apiSearchPatients2 = async (params) => {
     const data = await response.json();
     if (!data.success) throw new Error(data.message || '환자 검색 실패');
     return data.patients;
-}
+};
+
 
 // ===============================================
 // UI 컴포넌트
