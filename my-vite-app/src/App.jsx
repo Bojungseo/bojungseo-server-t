@@ -1110,6 +1110,29 @@ function ExtraMenu1({ onGoToDashboard }) {
 
 // --- MenuPage5 (추가 메뉴 2) ---
 function ExtraMenu2({ onGoToDashboard }) {
+    const [sheetImageUrl, setSheetImageUrl] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchSheetImage = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                // 예시: 구글 스프레드시트를 "publish to web" 후 이미지 URL 사용
+                // 실제 사용 시 URL을 본인의 시트 URL로 교체
+                const url = 'https://docs.google.com/spreadsheets/d/e/YOUR_SHEET_ID/pubchart?oid=0&format=image';
+                setSheetImageUrl(url);
+            } catch (err) {
+                setError('스프레드시트 로드 실패');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSheetImage();
+    }, []); // 페이지 접근 시마다 호출됨
+
     return (
         <div className="p-8 min-h-screen bg-gray-50">
             <div className="w-full">
@@ -1120,14 +1143,21 @@ function ExtraMenu2({ onGoToDashboard }) {
                             대시보드로 돌아가기
                         </button>
                     </div>
-                    <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-                        <p className="font-semibold">이곳은 '추가 메뉴 2'의 콘텐츠입니다.</p>
+                    <div className="mt-4 p-4 bg-gray-100 rounded-lg flex justify-center items-center min-h-[400px]">
+                        {loading ? (
+                            <p>로딩 중...</p>
+                        ) : error ? (
+                            <p className="text-red-500">{error}</p>
+                        ) : (
+                            sheetImageUrl && <img src={sheetImageUrl} alt="원수사 연락망" className="max-w-full h-auto" />
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
 
 // --- MenuPage6 (추가 메뉴 3) ---
 function ExtraMenu3({ onGoToDashboard }) {
