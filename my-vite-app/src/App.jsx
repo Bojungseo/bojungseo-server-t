@@ -1121,7 +1121,7 @@ function ExtraMenu2({ onGoToDashboard }) {
             try {
                 // 예시: 구글 스프레드시트를 "publish to web" 후 이미지 URL 사용
                 // 실제 사용 시 URL을 본인의 시트 URL로 교체
-                const url = 'https://docs.google.com/spreadsheets/d/e/YOUR_SHEET_ID/pubchart?oid=0&format=image';
+                const url = 'https://docs.google.com/spreadsheets/d/e/14V02SniJzspB-nEYArxrCIEOwhClL3HC94qP8sWZA-s/pubchart?oid=0&format=image';
                 setSheetImageUrl(url);
             } catch (err) {
                 setError('스프레드시트 로드 실패');
