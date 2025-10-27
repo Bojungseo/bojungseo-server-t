@@ -1108,55 +1108,76 @@ function ExtraMenu1({ onGoToDashboard }) {
     );
 }
 
-// --- MenuPage5 (추가 메뉴 2) ---
-function ExtraMenu2({ onGoToDashboard }) {
-    const [sheetImageUrl, setSheetImageUrl] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+// ExtraMenu2와 연결된 페이지로 API를 통해 스프레드시트 가져오는 코드
+
+function ContactPage({ onGoToDashboard }) {
+    const [contacts, setContacts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchSheetImage = async () => {
-            setLoading(true);
-            setError('');
+        const fetchContacts = async () => {
             try {
-                // 예시: 구글 스프레드시트를 "publish to web" 후 이미지 URL 사용
-                // 실제 사용 시 URL을 본인의 시트 URL로 교체
-                const url = 'https://docs.google.com/spreadsheets/d/e/14V02SniJzspB-nEYArxrCIEOwhClL3HC94qP8sWZA-s/pubchart?oid=0&format=image';
-                setSheetImageUrl(url);
-            } catch (err) {
-                setError('스프레드시트 로드 실패');
+                const res = await fetch(`${BACKEND_URL}/api/contacts`);
+                const data = await res.json();
+                if (data.success) setContacts(data.contacts);
+            } catch (error) {
+                console.error('원수사 연락망 가져오기 실패:', error);
             } finally {
                 setLoading(false);
             }
         };
+        fetchContacts();
+    }, []);
 
-        fetchSheetImage();
-    }, []); // 페이지 접근 시마다 호출됨
+    if (loading) return <div>연락망을 불러오는 중...</div>;
 
     return (
-        <div className="p-8 min-h-screen bg-gray-50">
-            <div className="w-full">
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">원수사 연락망</h1>
-                        <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                            대시보드로 돌아가기
-                        </button>
-                    </div>
-                    <div className="mt-4 p-4 bg-gray-100 rounded-lg flex justify-center items-center min-h-[400px]">
-                        {loading ? (
-                            <p>로딩 중...</p>
-                        ) : error ? (
-                            <p className="text-red-500">{error}</p>
-                        ) : (
-                            sheetImageUrl && <img src={sheetImageUrl} alt="원수사 연락망" className="max-w-full h-auto" />
-                        )}
-                    </div>
-                </div>
-            </div>
+        <div className="overflow-auto p-4">
+            <button onClick={onGoToDashboard} className="mb-2 px-3 py-1 bg-blue-500 text-white rounded">대시보드로 돌아가기</button>
+            <table className="table-auto border border-gray-300 w-full">
+                <thead>
+                    <tr className="bg-gray-200">
+                        {contacts[0] && Object.keys(contacts[0]).map((key) => (
+                            <th key={key} className="border px-2 py-1">{key}</th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {contacts.map((contact, idx) => (
+                        <tr key={idx} className="hover:bg-gray-100">
+                            {Object.values(contact).map((val, i) => (
+                                <td key={i} className="border px-2 py-1">{val}</td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }
+
+
+// --- MenuPage5 (추가 메뉴 2) ---
+function ExtraMenu2({ onGoToDashboard }) {
+    const [showContacts, setShowContacts] = useState(false);
+
+    return (
+        <div className="p-4">
+            {!showContacts && (
+                <button
+                    className="px-3 py-1 bg-green-500 text-white rounded"
+                    onClick={() => setShowContacts(true)}
+                >
+                    원수사 연락망
+                </button>
+            )}
+
+            {showContacts && <ContactPage onGoToDashboard={onGoToDashboard} />}
+        </div>
+    );
+}
+
+
 
 
 // --- MenuPage6 (추가 메뉴 3) ---
