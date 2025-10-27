@@ -16,6 +16,8 @@ const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON || '{}');
 const AUTH_SPREADSHEET_ID = '1yfPB1mhLnYP59SIRJNsPjiug-3glypQcB1zu4ODXQVs';     // 'my-auth-database'의 ID
 const PATIENT_SPREADSHEET_ID = '1R7sNFwF0g-_ii6wNxol3-1xBQUbxnioE3ST70REvpNM'; // 'patients' 스프레드시트의 ID
 const PATIENT2_SPREADSHEET_ID = '1vsnRcJ4JxO3xwmecWX8pAd6Mr_Wpxf-eyzpkcxb9mBI'; // ✨ 신규 ID
+const CONTACT_SPREADSHEET_ID = '14V02SniJzspB-nEYArxrCIEOwhClL3HC94qP8sWZA-s'; // 원수사 연락망
+
 
 // --- 구글 시트 인증 ---
 const serviceAccountAuth = new JWT({
@@ -30,6 +32,7 @@ const serviceAccountAuth = new JWT({
 const authDoc = new GoogleSpreadsheet(AUTH_SPREADSHEET_ID, serviceAccountAuth);
 const patientDoc = new GoogleSpreadsheet(PATIENT_SPREADSHEET_ID, serviceAccountAuth);
 const patientDoc2 = new GoogleSpreadsheet(PATIENT2_SPREADSHEET_ID, serviceAccountAuth);
+const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
 
 // =================================================================
 // 데이터 캐싱 로직
