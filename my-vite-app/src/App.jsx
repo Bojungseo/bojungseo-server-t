@@ -361,200 +361,244 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
   );
 }
 
-// --- AdminPanelPage (변경 없음) ---
 function AdminPanelPage({ onGoToDashboard }) {
-    const [requests, setRequests] = useState([]);
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [editingUser, setEditingUser] = useState(null); // 현재 수정 중인 사용자의 id와 데이터를 저장
+  const [pendingUsers, setPendingUsers] = useState([]);   // 신청 아이디 목록
+  const [approvedUsers, setApprovedUsers] = useState([]); // 승인된 사용자 관리
+  const [editingUserId, setEditingUserId] = useState(null); // 편집 중인 사용자 ID
+  const [editedUserData, setEditedUserData] = useState({ department: '', branch: '' }); // 편집 데이터
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    const fetchData = useCallback(async () => {
+  useEffect(() => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        setError('');
-        const [requestsData, usersData] = await Promise.all([
-            apiGetRequests(),
-            apiGetUsers()
-        ]);
-        setRequests(requestsData);
-        setUsers(usersData);
+        const pending = await apiFetchPendingUsers();
+        const approved = await apiFetchApprovedUsers();
+        setPendingUsers(pending);
+        setApprovedUsers(approved);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
-    }, []);
-  
-    useEffect(() => {
-      fetchData();
-    }, [fetchData]);
+    };
+    fetchData();
+  }, []);
 
-    const handleApprove = async (requestId) => {
-        if (window.confirm('이 사용자의 아이디 신청을 승인하시겠습니까?')) {
-            try {
-              await apiApproveRequest(requestId);
-              fetchData();
-            } catch (err) {
-              alert(err.message);
-            }
-        }
-    };
-  
-    const handleReject = async (requestId) => {
-        if (window.confirm('이 사용자의 아이디 신청을 거절하시겠습니까?')) {
-            try {
-                await apiRejectRequest(requestId);
-                setRequests(prev => prev.filter(req => req.id !== requestId));
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-    };
+  const handleApprove = async (id) => {
+    try {
+      await apiApproveUser(id);
+      const approvedUser = pendingUsers.find(u => u.id === id);
+      setApprovedUsers(prev => [...prev, approvedUser]);
+      setPendingUsers(prev => prev.filter(u => u.id !== id));
+    } catch (err) {
+      alert(`승인 실패: ${err.message}`);
+    }
+  };
 
-    const handleEditUser = (user) => {
-        setEditingUser({ 
-            ...user, 
-            본부: user.본부 || '미지정',
-            지사: user.지사 || '미지정',
-        }); 
-    };
+  const handleReject = async (id) => {
+    try {
+      await apiRejectUser(id);
+      setPendingUsers(prev => prev.filter(u => u.id !== id));
+    } catch (err) {
+      alert(`거절 실패: ${err.message}`);
+    }
+  };
 
-    const handleCancelEdit = () => {
-        setEditingUser(null);
-    };
+  const startEditing = (user) => {
+    setEditingUserId(user.id);
+    setEditedUserData({ department: user.department, branch: user.branch });
+  };
 
-    const handleUpdateUser = async () => {
-        if (window.confirm(`'${editingUser.username}' 사용자의 정보를 저장하시겠습니까?`)) {
-            try {
-                await apiUpdateUser({
-                    id: editingUser.id,
-                    password: editingUser.password,
-                    grade: editingUser.grade,
-                    본부: editingUser.본부, 
-                    지사: editingUser.지사, 
-                });
-                setEditingUser(null);
-                fetchData();
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-    };
-    
-    const handleDeleteUser = async (userId, username) => {
-        if (window.confirm(`정말로 '${username}' 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
-            try {
-                await apiDeleteUser(userId);
-                fetchData();
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-    };
+  const cancelEditing = () => {
+    setEditingUserId(null);
+    setEditedUserData({ department: '', branch: '' });
+  };
 
-    const handleEditingUserChange = (e) => {
-        const { name, value } = e.target;
-        setEditingUser(prev => ({ ...prev, [name]: value }));
-    };
-  
-    return (
-      <div className="p-8 min-h-screen bg-gray-100">
-        <div className="w-full bg-white p-6 rounded-lg shadow-md">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">👑 관리자 패널</h1>
-                <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">대시보드로 돌아가기</button>
-            </div>
-  
-            {loading && <p className="text-center">데이터를 불러오는 중입니다...</p>}
-            {error && <p className="text-center text-red-500">{error}</p>}
-            
-            {!loading && !error && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div>
-                        <h2 className="text-2xl font-semibold mb-4">아이디 신청 목록</h2>
-                        <div className="overflow-x-auto border rounded-lg">
-                            <table className="min-w-full bg-white">
-                                <thead className="bg-gray-200">
-                                    <tr>
-                                        <th className="py-2 px-4 border-b">신청 아이디</th>
-                                        <th className="py-2 px-4 border-b">작업</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {requests.length > 0 ? (
-                                        requests.map(req => (
-                                            <tr key={req.id}>
-                                                <td className="py-2 px-4 border-b text-center">{req.username}</td>
-                                                <td className="py-2 px-4 border-b text-center">
-                                                    <button onClick={() => handleApprove(req.id)} className="text-sm bg-green-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-green-600">승인</button>
-                                                    <button onClick={() => handleReject(req.id)} className="text-sm bg-red-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-red-600">거절</button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="2" className="py-4 px-4 text-center text-gray-500">새로운 아이디 신청이 없습니다.</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div>
-                        <h2 className="text-2xl font-semibold mb-4">승인된 사용자 관리</h2>
-                        <div className="overflow-x-auto border rounded-lg">
-                            <table className="min-w-full bg-white">
-                                <thead className="bg-gray-200">
-                                    <tr>
-                                        <th className="py-2 px-4 border-b">아이디</th>
-                                        <th className="py-2 px-4 border-b">비밀번호</th>
-                                        <th className="py-2 px-4 border-b">등급</th>
-                                        <th className="py-2 px-4 border-b">본부</th>
-                                        <th className="py-2 px-4 border-b">지사</th>
-                                        <th className="py-2 px-4 border-b">작업</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {users.map(user => (
-                                        <tr key={user.id}>
-                                            {editingUser && editingUser.id === user.id ? (
-                                                <>
-                                                    <td className="py-2 px-4 border-b text-center">{user.username}</td>
-                                                    <td className="py-2 px-4 border-b"><input type="text" name="password" value={editingUser.password} onChange={handleEditingUserChange} className="w-full px-2 py-1 border rounded-md"/></td>
-                                                    <td className="py-2 px-4 border-b"><input type="text" name="grade" value={editingUser.grade} onChange={handleEditingUserChange} className="w-full px-2 py-1 border rounded-md"/></td>
-                                                    <td className="py-2 px-4 border-b"><input type="text" name="본부" value={editingUser.본부} onChange={handleEditingUserChange} className="w-full px-2 py-1 border rounded-md"/></td>
-                                                    <td className="py-2 px-4 border-b"><input type="text" name="지사" value={editingUser.지사} onChange={handleEditingUserChange} className="w-full px-2 py-1 border rounded-md"/></td>
-                                                    <td className="py-2 px-4 border-b text-center whitespace-nowrap">
-                                                        <button onClick={handleUpdateUser} className="text-sm bg-blue-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-blue-600">저장</button>
-                                                        <button onClick={handleCancelEdit} className="text-sm bg-gray-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-gray-600">취소</button>
-                                                    </td>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <td className="py-2 px-4 border-b text-center">{user.username}</td>
-                                                    <td className="py-2 px-4 border-b text-center">{user.password}</td>
-                                                    <td className="py-2 px-4 border-b text-center">{user.grade}</td>
-                                                    <td className="py-2 px-4 border-b text-center">{user.본부 || '미지정'}</td>
-                                                    <td className="py-2 px-4 border-b text-center">{user.지사 || '미지정'}</td>
-                                                    <td className="py-2 px-4 border-b text-center whitespace-nowrap">
-                                                        <button onClick={() => handleEditUser(user)} className="text-sm bg-yellow-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-yellow-600">수정</button>
-                                                        <button onClick={() => handleDeleteUser(user.id, user.username)} className="text-sm bg-red-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-red-600">삭제</button>
-                                                    </td>
-                                                </>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            )}
+  const saveEdit = async (id) => {
+    try {
+      await apiUpdateUser(id, editedUserData);
+      setApprovedUsers(prev =>
+        prev.map(u => (u.id === id ? { ...u, ...editedUserData } : u))
+      );
+      cancelEditing();
+    } catch (err) {
+      alert(`수정 실패: ${err.message}`);
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    try {
+      await apiDeleteUser(id);
+      setApprovedUsers(prev => prev.filter(u => u.id !== id));
+    } catch (err) {
+      alert(`삭제 실패: ${err.message}`);
+    }
+  };
+
+  if (loading) return <div className="p-8">데이터 로딩 중...</div>;
+  if (error) return <div className="p-8 text-red-500">오류: {error}</div>;
+
+  return (
+    <div className="p-8 min-h-screen bg-gray-50">
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">관리자 패널</h1>
+        <button
+          onClick={onGoToDashboard}
+          className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+        >
+          대시보드로 돌아가기
+        </button>
+      </div>
+
+      {/* ---------------- 신청 아이디 목록 ---------------- */}
+      <div className="mb-12">
+        <h2 className="text-2xl font-semibold mb-4">아이디 신청 목록</h2>
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="py-3 px-4 border-b">신청 아이디</th>
+                <th className="py-3 px-4 border-b">본부</th>
+                <th className="py-3 px-4 border-b">지사</th>
+                <th className="py-3 px-4 border-b text-center">작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="py-4 text-center text-gray-500">
+                    신청 아이디가 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                pendingUsers.map(user => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="py-3 px-4 border-b">{user.username}</td>
+                    <td className="py-3 px-4 border-b">{user.department}</td>
+                    <td className="py-3 px-4 border-b">{user.branch}</td>
+                    <td className="py-3 px-4 border-b text-center space-x-2">
+                      <button
+                        onClick={() => handleApprove(user.id)}
+                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                      >
+                        승인
+                      </button>
+                      <button
+                        onClick={() => handleReject(user.id)}
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                      >
+                        거절
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-    );
+
+      {/* ---------------- 승인된 사용자 관리 (인라인 편집) ---------------- */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-4">승인된 사용자 관리</h2>
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="py-3 px-4 border-b">사용자 아이디</th>
+                <th className="py-3 px-4 border-b">본부</th>
+                <th className="py-3 px-4 border-b">지사</th>
+                <th className="py-3 px-4 border-b text-center">작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {approvedUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="py-4 text-center text-gray-500">
+                    승인된 사용자가 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                approvedUsers.map(user => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="py-3 px-4 border-b">{user.username}</td>
+
+                    {/* 본부/지사 인라인 편집 */}
+                    <td className="py-3 px-4 border-b">
+                      {editingUserId === user.id ? (
+                        <input
+                          type="text"
+                          value={editedUserData.department}
+                          onChange={(e) =>
+                            setEditedUserData(prev => ({ ...prev, department: e.target.value }))
+                          }
+                          className="px-2 py-1 border rounded w-full"
+                        />
+                      ) : (
+                        user.department
+                      )}
+                    </td>
+                    <td className="py-3 px-4 border-b">
+                      {editingUserId === user.id ? (
+                        <input
+                          type="text"
+                          value={editedUserData.branch}
+                          onChange={(e) =>
+                            setEditedUserData(prev => ({ ...prev, branch: e.target.value }))
+                          }
+                          className="px-2 py-1 border rounded w-full"
+                        />
+                      ) : (
+                        user.branch
+                      )}
+                    </td>
+
+                    <td className="py-3 px-4 border-b text-center space-x-2">
+                      {editingUserId === user.id ? (
+                        <>
+                          <button
+                            onClick={() => saveEdit(user.id)}
+                            className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                          >
+                            저장
+                          </button>
+                          <button
+                            onClick={cancelEditing}
+                            className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+                          >
+                            취소
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => startEditing(user)}
+                            className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                          >
+                            삭제
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 }
+
 
 // --- MenuPage1 (조건 검색 1) ---
 function MenuPage1({ onGoToDashboard }) {
