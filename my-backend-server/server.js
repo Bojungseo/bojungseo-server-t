@@ -27,6 +27,20 @@ const serviceAccountAuth = new JWT({
   ],
 });
 
+// --- 11. 원수사 연락망 API (Google Sheets 시트 데이터를 그대로 JSON으로 전달)
+app.get('/api/contacts', async (req, res) => {
+    try {
+        const sheet = patientDoc.sheetsByIndex[0]; // 원수사 연락망 시트 (첫 번째 시트 기준)
+        await sheet.loadHeaderRow(); // 헤더 읽기
+        const rows = await sheet.getRows();
+        const contacts = rows.map(row => row.toObject()); // 모든 행을 객체로 변환
+        res.status(200).json({ success: true, contacts });
+    } catch (error) {
+        console.error('[Backend] 원수사 연락망 불러오기 오류:', error);
+        res.status(500).json({ success: false, message: '원수사 연락망 조회 중 오류가 발생했습니다.' });
+    }
+});
+
 const authDoc = new GoogleSpreadsheet(AUTH_SPREADSHEET_ID, serviceAccountAuth);
 const patientDoc = new GoogleSpreadsheet(PATIENT_SPREADSHEET_ID, serviceAccountAuth);
 const patientDoc2 = new GoogleSpreadsheet(PATIENT2_SPREADSHEET_ID, serviceAccountAuth);
