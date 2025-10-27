@@ -84,12 +84,6 @@ app.use(express.json());
 const frontendDistPath = path.join(__dirname, './dist');
 app.use(express.static(frontendDistPath));
 
-// SPA 대응 (API 이외 모든 경로는 index.html 반환)
-app.get('/*', (req, res, next) => {
-    if (req.path.startsWith('/api/')) return next();
-    res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
-
 // --- 1. 로그인 API ---
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
@@ -266,6 +260,13 @@ app.get('/api/search-patients-2', async (req, res) => {
         console.error('[Backend] 환자 검색 중 오류:', error);
         res.status(500).json({ success: false, message: '검색 중 오류가 발생했습니다.' });
     }
+});
+
+// ✅ 수정됨: 모든 API 라우트 정의 후에 SPA fallback 추가
+app.get('*', (req, res) => {
+    // API 경로는 패스
+    if (req.originalUrl.startsWith('/api/')) return res.status(404).json({ message: 'API 경로를 찾을 수 없습니다.' });
+    res.sendFile(path.resolve(frontendDistPath, 'index.html'));
 });
 
 // =================================================================
