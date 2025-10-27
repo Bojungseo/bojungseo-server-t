@@ -262,12 +262,12 @@ app.get('/api/search-patients-2', async (req, res) => {
     }
 });
 
-// ✅ 수정됨: 모든 API 라우트 정의 후에 SPA fallback 추가
-app.get('*', (req, res) => {
-    // API 경로는 패스
-    if (req.originalUrl.startsWith('/api/')) return res.status(404).json({ message: 'API 경로를 찾을 수 없습니다.' });
-    res.sendFile(path.resolve(frontendDistPath, 'index.html'));
+// ✅ 모든 API 라우트 이후에 위치해야 함
+app.use((req, res, next) => {
+  if (req.originalUrl.startsWith('/api/')) return next();
+  res.sendFile(path.resolve(frontendDistPath, 'index.html'));
 });
+
 
 // =================================================================
 // 서버 시작
