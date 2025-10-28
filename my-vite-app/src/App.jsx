@@ -1156,15 +1156,28 @@ function ContactPage({ onGoToDashboard }) {
     );
 }
 
+
 // --- MenuPage5 (추가 메뉴 2) ---
 function ExtraMenu2({ onGoToDashboard }) {
-    // ExtraMenu2 페이지 진입 시 바로 연락망 페이지 표시
+    const [showContacts, setShowContacts] = useState(false);
+
     return (
         <div className="p-4">
-            <ContactPage onGoToDashboard={onGoToDashboard} />
+            {!showContacts && (
+                <button
+                    className="px-3 py-1 bg-green-500 text-white rounded"
+                    onClick={() => setShowContacts(true)}
+                >
+                    원수사 연락망
+                </button>
+            )}
+
+            {showContacts && <ContactPage onGoToDashboard={onGoToDashboard} />}
         </div>
     );
 }
+
+
 
 
 // --- MenuPage6 (추가 메뉴 3) ---
