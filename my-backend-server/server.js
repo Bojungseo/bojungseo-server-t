@@ -265,23 +265,47 @@ app.get('/api/search-patients-2', async (req, res) => {
     }
 });
 
-// --- 11. 원수사 연락망 API (모든 셀 데이터를 배열로 반환)
+// --- 11. 원수사 연락망 API (Google Sheets 시트 데이터를 그대로 JSON으로 전달)
 app.get('/api/contacts', async (req, res) => {
     try {
         const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
         await contactDoc.loadInfo();
         const sheet = contactDoc.sheetsByIndex[0];
 
-        // 전체 데이터 불러오기 (헤더 무시)
-        const rows = await sheet.getRows({ offset: 0, limit: 1000 });
+        // 모든 셀 로드
+        await sheet.loadCells();
 
-        // Google Sheets API에서 전체 셀 값을 가져오기
-        const rawData = rows.map(row => Object.values(row._rawData)); // 모든 열을 그대로 가져옴
+        const numRows = sheet.rowCount;
+        const numCols = sheet.columnCount;
 
-        res.status(200).json({ success: true, data: rawData });
+        // 헤더 행(1행)을 읽어옴
+        const headerRow = [];
+        for (let c = 0; c < numCols; c++) {
+            const cell = sheet.getCell(0, c);
+            if (cell.value) headerRow.push(String(cell.value).trim());
+        }
+
+        // 나머지 데이터 행을 2행부터 순회하며 객체로 만듦
+        const rows = [];
+        for (let r = 1; r < numRows; r++) {
+            const rowObj = {};
+            let isEmptyRow = true;
+            for (let c = 0; c < headerRow.length; c++) {
+                const cell = sheet.getCell(r, c);
+                const val = cell.value ? String(cell.value).trim() : '';
+                if (val) isEmptyRow = false;
+                rowObj[headerRow[c]] = val;
+            }
+            if (!isEmptyRow) rows.push(rowObj);
+        }
+
+        res.status(200).json({ success: true, contacts: rows });
     } catch (error) {
-        console.error('[Backend] 연락망 데이터 불러오기 오류:', error);
-        res.status(500).json({ success: false, message: '원수사 연락망 조회 중 오류 발생' });
+        console.error('[Backend] 원수사 연락망 불러오기 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '원수사 연락망 조회 중 오류가 발생했습니다.'
+        });
     }
 });
 
