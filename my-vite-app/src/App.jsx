@@ -267,7 +267,8 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
     // 바로가기 버튼들을 한 줄로 표시하는 컴포넌트 (가로 배치)
     const QuickLinksRow = () => {
         const isManager = user.grade === '최고 관리자';
-        
+        const isRegular2 = user.grade === '일반 회원2'; // 새 조건
+
         const allButtons = [
             { label: '예외질환 검색(유병자)', onClick: onGoToMenuPage1 },
             { label: '예외질환 검색(건강고지)', onClick: onGoToMenuPage2 },
@@ -282,7 +283,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                 <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700">바로가기</h2>
                 <div className="flex flex-wrap gap-2">
                     {allButtons.map((button, index) => {
-                        if (button.managerOnly && !isManager) return null;
+                        if (button.managerOnly && !(isManager || isRegular2)) return null;
                         
                         return (
                             <button 
