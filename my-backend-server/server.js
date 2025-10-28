@@ -265,7 +265,7 @@ app.get('/api/search-patients-2', async (req, res) => {
     }
 });
 
-// --- 11. 원수사 연락망 API (손해보험 / 생명보험 구분) ---
+// --- 11. 원수사 연락망 API (1열 기준으로 손해보험 / 생명보험 구분) ---
 app.get('/api/contacts', async (req, res) => {
     try {
         const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
@@ -276,38 +276,48 @@ app.get('/api/contacts', async (req, res) => {
         await sheet.loadHeaderRow(3);
         const rows = await sheet.getRows();
 
-        // ✅ 전체 데이터를 객체화
+        // 전체 행을 객체로 변환
         const allContacts = rows.map(r => r.toObject());
 
-        // ✅ “손해보험” / “생명보험” 섹션 구분
-        //   - 예: "손해보험" 행 이후 ~ "생명보험" 행 전까지 → 손해보험 그룹
-        const sonhaeIndex = allContacts.findIndex(obj =>
-            Object.values(obj).some(v => typeof v === 'string' && v.includes('손해보험'))
+        // ✅ 1열(헤더 기준 첫 번째 컬럼명) 추출
+        const firstCol = Object.keys(allContacts[0])[0]; // 예: "원수사" 또는 "구분"
+
+        // ✅ 손해보험 / 생명보험 구분 위치 찾기 (1열 값 기준)
+        const sonhaeIndex = allContacts.findIndex(row =>
+            row[firstCol]?.toString().trim() === '손해보험'
         );
-        const saengmyeongIndex = allContacts.findIndex(obj =>
-            Object.values(obj).some(v => typeof v === 'string' && v.includes('생명보험'))
+        const saengmyeongIndex = allContacts.findIndex(row =>
+            row[firstCol]?.toString().trim() === '생명보험'
         );
 
+        // ✅ 각 구간 자르기
         let sonhae = [];
         let saengmyeong = [];
 
         if (sonhaeIndex !== -1 && saengmyeongIndex !== -1) {
             sonhae = allContacts.slice(sonhaeIndex + 1, saengmyeongIndex);
             saengmyeong = allContacts.slice(saengmyeongIndex + 1);
+        } else if (sonhaeIndex !== -1) {
+            sonhae = allContacts.slice(sonhaeIndex + 1);
+        } else if (saengmyeongIndex !== -1) {
+            saengmyeong = allContacts.slice(saengmyeongIndex + 1);
         } else {
-            // 구분 텍스트가 없을 경우 전체를 통으로 반환
+            // 혹시 구분이 없으면 전체 반환
             sonhae = allContacts;
         }
 
         // ✅ 빈 행 제거
         const clean = (arr) =>
-            arr.filter(row => Object.values(row).some(v => v && v.toString().trim() !== ''));
+            arr.filter(row =>
+                Object.values(row).some(v => v && v.toString().trim() !== '')
+            );
 
         res.status(200).json({
             success: true,
             sonhae: clean(sonhae),
             saengmyeong: clean(saengmyeong),
         });
+
     } catch (error) {
         console.error('[Backend] 원수사 연락망 불러오기 오류:', error);
         res.status(500).json({
@@ -316,6 +326,7 @@ app.get('/api/contacts', async (req, res) => {
         });
     }
 });
+
 
 
 // ✅ 모든 API 라우트 이후에 위치해야 함
