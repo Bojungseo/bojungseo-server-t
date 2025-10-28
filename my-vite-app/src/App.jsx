@@ -1110,7 +1110,9 @@ function ExtraMenu1({ onGoToDashboard }) {
 
 // --- ExtraMenu2와 연결된 원수사 연락망 페이지 ---
 function ContactPage({ onGoToDashboard }) {
-    const [contacts, setContacts] = useState([]);
+    const [tab, setTab] = useState('sonhae');
+    const [sonhae, setSonhae] = useState([]);
+    const [saengmyeong, setSaengmyeong] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -1119,7 +1121,8 @@ function ContactPage({ onGoToDashboard }) {
                 const res = await fetch(`${BACKEND_URL}/api/contacts`);
                 const data = await res.json();
                 if (data.success) {
-                    setContacts(data.contacts);
+                    setSonhae(data.sonhae);
+                    setSaengmyeong(data.saengmyeong);
                 } else {
                     console.error('원수사 연락망 로드 실패:', data.message);
                 }
@@ -1134,14 +1137,12 @@ function ContactPage({ onGoToDashboard }) {
 
     if (loading) return <div className="p-4 text-gray-600">📞 원수사 연락망을 불러오는 중...</div>;
 
-    if (!contacts.length)
+    const currentList = tab === 'sonhae' ? sonhae : saengmyeong;
+    if (!currentList.length)
         return (
             <div className="p-4 text-gray-600">
                 <p>⚠️ 표시할 연락망 데이터가 없습니다.</p>
-                <button
-                    onClick={onGoToDashboard}
-                    className="mt-3 px-3 py-1 bg-blue-500 text-white rounded"
-                >
+                <button onClick={onGoToDashboard} className="mt-3 px-3 py-1 bg-blue-500 text-white rounded">
                     대시보드로 돌아가기
                 </button>
             </div>
@@ -1151,31 +1152,41 @@ function ContactPage({ onGoToDashboard }) {
         <div className="overflow-auto p-4">
             <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-semibold">📋 원수사 연락망</h2>
-                <button
-                    onClick={onGoToDashboard}
-                    className="px-3 py-1 bg-blue-500 text-white rounded"
-                >
+                <button onClick={onGoToDashboard} className="px-3 py-1 bg-blue-500 text-white rounded">
                     대시보드로 돌아가기
                 </button>
             </div>
 
+            {/* ✅ 탭 버튼 */}
+            <div className="flex gap-2 mb-4">
+                <button
+                    onClick={() => setTab('sonhae')}
+                    className={`px-3 py-1 rounded ${tab === 'sonhae' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                >
+                    손해보험
+                </button>
+                <button
+                    onClick={() => setTab('saengmyeong')}
+                    className={`px-3 py-1 rounded ${tab === 'saengmyeong' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                >
+                    생명보험
+                </button>
+            </div>
+
+            {/* ✅ 표 출력 */}
             <table className="table-auto border border-gray-300 w-full text-sm">
                 <thead>
                     <tr className="bg-gray-200">
-                        {Object.keys(contacts[0]).map((key) => (
-                            <th key={key} className="border px-2 py-1 text-center">
-                                {key}
-                            </th>
+                        {Object.keys(currentList[0]).map((key) => (
+                            <th key={key} className="border px-2 py-1 text-center">{key}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {contacts.map((contact, idx) => (
+                    {currentList.map((row, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
-                            {Object.values(contact).map((val, i) => (
-                                <td key={i} className="border px-2 py-1 text-center">
-                                    {val || '-'}
-                                </td>
+                            {Object.values(row).map((val, i) => (
+                                <td key={i} className="border px-2 py-1 text-center">{val || '-'}</td>
                             ))}
                         </tr>
                     ))}
@@ -1185,10 +1196,8 @@ function ContactPage({ onGoToDashboard }) {
     );
 }
 
-
 // --- MenuPage5 (추가 메뉴 2) ---
 function ExtraMenu2({ onGoToDashboard }) {
-    // ✅ 페이지 진입 시 바로 ContactPage를 표시
     return (
         <div className="p-4">
             <ContactPage onGoToDashboard={onGoToDashboard} />
