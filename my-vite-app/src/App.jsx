@@ -1110,24 +1110,18 @@ function ExtraMenu1({ onGoToDashboard }) {
 
 // --- ExtraMenu2와 연결된 원수사 연락망 페이지 ---
 function ContactPage({ onGoToDashboard }) {
-    const [tab, setTab] = useState('sonhae');
-    const [sonhae, setSonhae] = useState([]);
-    const [saengmyeong, setSaengmyeong] = useState([]);
+    const [data, setData] = useState({ sonhae: [], saengmyeong: [] });
+    const [activeTab, setActiveTab] = useState('sonhae');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchContacts = async () => {
             try {
                 const res = await fetch(`${BACKEND_URL}/api/contacts`);
-                const data = await res.json();
-                if (data.success) {
-                    setSonhae(data.sonhae);
-                    setSaengmyeong(data.saengmyeong);
-                } else {
-                    console.error('원수사 연락망 로드 실패:', data.message);
-                }
+                const result = await res.json();
+                if (result.success) setData(result);
             } catch (error) {
-                console.error('원수사 연락망 가져오기 실패:', error);
+                console.error('연락망 로드 실패:', error);
             } finally {
                 setLoading(false);
             }
@@ -1135,57 +1129,47 @@ function ContactPage({ onGoToDashboard }) {
         fetchContacts();
     }, []);
 
-    if (loading) return <div className="p-4 text-gray-600">📞 원수사 연락망을 불러오는 중...</div>;
+    if (loading) return <div>불러오는 중...</div>;
 
-    const currentList = tab === 'sonhae' ? sonhae : saengmyeong;
-    if (!currentList.length)
-        return (
-            <div className="p-4 text-gray-600">
-                <p>⚠️ 표시할 연락망 데이터가 없습니다.</p>
-                <button onClick={onGoToDashboard} className="mt-3 px-3 py-1 bg-blue-500 text-white rounded">
-                    대시보드로 돌아가기
-                </button>
-            </div>
-        );
+    const contacts = activeTab === 'sonhae' ? data.sonhae : data.saengmyeong;
 
     return (
         <div className="overflow-auto p-4">
             <div className="flex justify-between items-center mb-3">
-                <h2 className="text-lg font-semibold">📋 원수사 연락망</h2>
-                <button onClick={onGoToDashboard} className="px-3 py-1 bg-blue-500 text-white rounded">
+                <div className="space-x-2">
+                    <button
+                        onClick={() => setActiveTab('sonhae')}
+                        className={`px-3 py-1 rounded ${activeTab === 'sonhae' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                    >
+                        손해보험
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('saengmyeong')}
+                        className={`px-3 py-1 rounded ${activeTab === 'saengmyeong' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                    >
+                        생명보험
+                    </button>
+                </div>
+                <button
+                    onClick={onGoToDashboard}
+                    className="px-3 py-1 bg-blue-500 text-white rounded"
+                >
                     대시보드로 돌아가기
                 </button>
             </div>
 
-            {/* ✅ 탭 버튼 */}
-            <div className="flex gap-2 mb-4">
-                <button
-                    onClick={() => setTab('sonhae')}
-                    className={`px-3 py-1 rounded ${tab === 'sonhae' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
-                >
-                    손해보험
-                </button>
-                <button
-                    onClick={() => setTab('saengmyeong')}
-                    className={`px-3 py-1 rounded ${tab === 'saengmyeong' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
-                >
-                    생명보험
-                </button>
-            </div>
-
-            {/* ✅ 표 출력 */}
             <table className="table-auto border border-gray-300 w-full text-sm">
                 <thead>
                     <tr className="bg-gray-200">
-                        {Object.keys(currentList[0]).map((key) => (
+                        {Object.keys(contacts[0] || {}).map((key) => (
                             <th key={key} className="border px-2 py-1 text-center">{key}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {currentList.map((row, idx) => (
+                    {contacts.map((contact, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
-                            {Object.values(row).map((val, i) => (
+                            {Object.values(contact).map((val, i) => (
                                 <td key={i} className="border px-2 py-1 text-center">{val || '-'}</td>
                             ))}
                         </tr>
@@ -1195,6 +1179,7 @@ function ContactPage({ onGoToDashboard }) {
         </div>
     );
 }
+
 
 // --- MenuPage5 (추가 메뉴 2) ---
 function ExtraMenu2({ onGoToDashboard }) {
