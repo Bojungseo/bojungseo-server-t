@@ -265,7 +265,7 @@ app.get('/api/search-patients-2', async (req, res) => {
     }
 });
 
-// --- 11. 원수사 연락망 API (손해보험 / 생명보험 자동 분류) ---
+// --- 11. 원수사 연락망 API (1열 기준으로 손해보험 / 생명보험 구분) ---
 app.get('/api/contacts', async (req, res) => {
     try {
         const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
@@ -279,26 +279,31 @@ app.get('/api/contacts', async (req, res) => {
         // 전체 행을 객체로 변환
         const allContacts = rows.map(r => r.toObject());
 
-        // ✅ 1열 컬럼명 확인 (ex: "원수사")
-        const firstCol = Object.keys(allContacts[0])[0];
+        // ✅ 1열(헤더 기준 첫 번째 컬럼명) 추출
+        const firstCol = Object.keys(allContacts[0])[0]; // 예: "원수사" 또는 "구분"
 
-        let currentGroup = null;
-        const sonhae = [];
-        const saengmyeong = [];
+        // ✅ 손해보험 / 생명보험 구분 위치 찾기 (1열 값 기준)
+        const sonhaeIndex = allContacts.findIndex(row =>
+            row[firstCol]?.toString().trim() === '손해보험'
+        );
+        const saengmyeongIndex = allContacts.findIndex(row =>
+            row[firstCol]?.toString().trim() === '생명보험'
+        );
 
-        for (const row of allContacts) {
-            const firstValue = (row[firstCol] || '').toString().trim();
+        // ✅ 각 구간 자르기
+        let sonhae = [];
+        let saengmyeong = [];
 
-            // 구분 셀 값이 있으면 현재 그룹 업데이트
-            if (firstValue === '손해보험') currentGroup = '손해보험';
-            if (firstValue === '생명보험') currentGroup = '생명보험';
-
-            // 구분행 자체는 건너뜀
-            if (firstValue === '손해보험' || firstValue === '생명보험') continue;
-
-            // 현재 그룹에 맞게 분류
-            if (currentGroup === '손해보험') sonhae.push(row);
-            else if (currentGroup === '생명보험') saengmyeong.push(row);
+        if (sonhaeIndex !== -1 && saengmyeongIndex !== -1) {
+            sonhae = allContacts.slice(sonhaeIndex + 1, saengmyeongIndex);
+            saengmyeong = allContacts.slice(saengmyeongIndex + 1);
+        } else if (sonhaeIndex !== -1) {
+            sonhae = allContacts.slice(sonhaeIndex + 1);
+        } else if (saengmyeongIndex !== -1) {
+            saengmyeong = allContacts.slice(saengmyeongIndex + 1);
+        } else {
+            // 혹시 구분이 없으면 전체 반환
+            sonhae = allContacts;
         }
 
         // ✅ 빈 행 제거
@@ -321,7 +326,6 @@ app.get('/api/contacts', async (req, res) => {
         });
     }
 });
-
 
 
 
