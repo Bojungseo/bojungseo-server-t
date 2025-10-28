@@ -268,7 +268,7 @@ app.get('/api/search-patients-2', async (req, res) => {
 // --- 11. 원수사 연락망 API (Google Sheets 시트 데이터를 그대로 JSON으로 전달)
 app.get('/api/contacts', async (req, res) => {
     try {
-        const sheet = contactDoc.sheetsByIndex[0]; // 원수사 연락망 시트 (첫 번째 시트 기준)
+        const sheet = patientDoc.sheetsByIndex[0]; // 원수사 연락망 시트 (첫 번째 시트 기준)
         await sheet.loadHeaderRow(); // 헤더 읽기
         const rows = await sheet.getRows();
         const contacts = rows.map(row => row.toObject()); // 모든 행을 객체로 변환
