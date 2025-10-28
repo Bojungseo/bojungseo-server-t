@@ -1119,7 +1119,15 @@ function ContactPage({ onGoToDashboard }) {
                 const res = await fetch(`${BACKEND_URL}/api/contacts`);
                 const data = await res.json();
                 if (data.success) {
-                    setContacts(data.contacts);
+                    // ⚡ 헤더 없는 시트도 모두 표시되도록 변환
+                    // data.contacts가 배열의 배열일 경우
+                    if (Array.isArray(data.contacts) && Array.isArray(data.contacts[0])) {
+                        // 2차원 배열 그대로 사용
+                        setContacts(data.contacts);
+                    } else {
+                        // 기존 객체 배열
+                        setContacts(data.contacts);
+                    }
                 } else {
                     console.error('원수사 연락망 로드 실패:', data.message);
                 }
@@ -1132,7 +1140,8 @@ function ContactPage({ onGoToDashboard }) {
         fetchContacts();
     }, []);
 
-    if (loading) return <div className="p-4 text-gray-600">📞 원수사 연락망을 불러오는 중...</div>;
+    if (loading)
+        return <div className="p-4 text-gray-600">📞 원수사 연락망을 불러오는 중...</div>;
 
     if (!contacts.length)
         return (
@@ -1146,6 +1155,9 @@ function ContactPage({ onGoToDashboard }) {
                 </button>
             </div>
         );
+
+    // ⚡ 헤더 없는 시트인지 객체 배열인지 확인
+    const isArrayOfArrays = Array.isArray(contacts[0]);
 
     return (
         <div className="overflow-auto p-4">
@@ -1162,21 +1174,33 @@ function ContactPage({ onGoToDashboard }) {
             <table className="table-auto border border-gray-300 w-full text-sm">
                 <thead>
                     <tr className="bg-gray-200">
-                        {Object.keys(contacts[0]).map((key) => (
-                            <th key={key} className="border px-2 py-1 text-center">
-                                {key}
-                            </th>
-                        ))}
+                        {isArrayOfArrays
+                            ? contacts[0].map((_, i) => (
+                                  <th key={i} className="border px-2 py-1 text-center">
+                                      {`열${i + 1}`}
+                                  </th>
+                              ))
+                            : Object.keys(contacts[0]).map((key) => (
+                                  <th key={key} className="border px-2 py-1 text-center">
+                                      {key}
+                                  </th>
+                              ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {contacts.map((contact, idx) => (
+                    {contacts.map((row, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
-                            {Object.values(contact).map((val, i) => (
-                                <td key={i} className="border px-2 py-1 text-center">
-                                    {val || '-'}
-                                </td>
-                            ))}
+                            {isArrayOfArrays
+                                ? row.map((val, i) => (
+                                      <td key={i} className="border px-2 py-1 text-center">
+                                          {val || '-'}
+                                      </td>
+                                  ))
+                                : Object.values(row).map((val, i) => (
+                                      <td key={i} className="border px-2 py-1 text-center">
+                                          {val || '-'}
+                                      </td>
+                                  ))}
                         </tr>
                     ))}
                 </tbody>
@@ -1187,14 +1211,13 @@ function ContactPage({ onGoToDashboard }) {
 
 // --- MenuPage5 (추가 메뉴 2) ---
 function ExtraMenu2({ onGoToDashboard }) {
-    // ✅ 버튼 없이, 들어오자마자 바로 ContactPage를 표시
+    // ✅ 페이지 진입 시 바로 ContactPage를 표시
     return (
         <div className="p-4">
             <ContactPage onGoToDashboard={onGoToDashboard} />
         </div>
     );
 }
-
 
 
 
