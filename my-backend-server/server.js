@@ -272,31 +272,44 @@ app.get('/api/contacts', async (req, res) => {
         await contactDoc.loadInfo();
         const sheet = contactDoc.sheetsByIndex[0];
 
-        // ✅ 실제 헤더는 3행
-        await sheet.loadHeaderRow(3);
-        const rows = await sheet.getRows();
+        const rowCount = sheet.rowCount;
+        const colCount = sheet.columnCount;
 
-        // 전체 행을 객체로 변환
-        const allContacts = rows.map(r => r.toObject());
+        // 헤더는 3행
+        await sheet.loadCells({ startRowIndex: 2, endRowIndex: 3, startColumnIndex: 0, endColumnIndex: colCount });
 
-        // ✅ 기준 행(예: 31행부터 생명보험으로 간주)
-        // ⚠️ 이 값만 바꾸면 분리 기준 변경 가능!
+        // 데이터는 4행부터
+        await sheet.loadCells({ startRowIndex: 3, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: colCount });
+
+        // 헤더 가져오기
+        const headers = [];
+        for (let j = 0; j < colCount; j++) {
+            const headerValue = sheet.getCell(2, j).value; // 3행 -> 인덱스 2
+            headers.push(headerValue ? headerValue.toString().trim() : `COLUMN_${j}`);
+        }
+
+        // 데이터 객체화
+        const allContacts = [];
+        for (let i = 3; i < rowCount; i++) {
+            const rowObj = {};
+            let emptyRow = true;
+            for (let j = 0; j < colCount; j++) {
+                const value = sheet.getCell(i, j).value;
+                if (value && value.toString().trim() !== '') emptyRow = false;
+                rowObj[headers[j]] = value;
+            }
+            if (!emptyRow) allContacts.push(rowObj); // 빈 행 제외
+        }
+
+        // 기준 행(예: 31행부터 생명보험)
         const DIVIDE_ROW_INDEX = 32;
-
-        // ✅ 손해보험 / 생명보험 분리
-        const sonhae = allContacts.slice(0, DIVIDE_ROW_INDEX - 3); // 헤더가 3행이므로 보정
+        const sonhae = allContacts.slice(0, DIVIDE_ROW_INDEX - 3);
         const saengmyeong = allContacts.slice(DIVIDE_ROW_INDEX - 3);
-
-        // ✅ 빈 행 제거
-        const clean = (arr) =>
-            arr.filter(row =>
-                Object.values(row).some(v => v && v.toString().trim() !== '')
-            );
 
         res.status(200).json({
             success: true,
-            sonhae: clean(sonhae),
-            saengmyeong: clean(saengmyeong),
+            sonhae,
+            saengmyeong
         });
 
     } catch (error) {
@@ -307,7 +320,6 @@ app.get('/api/contacts', async (req, res) => {
         });
     }
 });
-
 
 
 
