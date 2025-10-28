@@ -281,7 +281,7 @@ app.get('/api/contacts', async (req, res) => {
 
         // ✅ 기준 행(예: 31행부터 생명보험으로 간주)
         // ⚠️ 이 값만 바꾸면 분리 기준 변경 가능!
-        const DIVIDE_ROW_INDEX = 33;
+        const DIVIDE_ROW_INDEX = 32;
 
         // ✅ 손해보험 / 생명보험 분리
         const sonhae = allContacts.slice(0, DIVIDE_ROW_INDEX - 3); // 헤더가 3행이므로 보정
