@@ -1199,7 +1199,9 @@ function ContactPage({ onGoToDashboard }) {
             <table className="table-auto border border-gray-300 w-full text-sm">
                 <thead>
                     <tr className="bg-gray-200">
-                        {Object.keys(currentList[0]).map((key, idx) => (
+                        {Object.keys(currentList[0])
+                            .slice(1) // 1열 제외
+                            .map((key, idx) => (
                             <th
                                 key={idx}
                                 className="border px-2 py-1 text-center whitespace-nowrap"
@@ -1212,7 +1214,9 @@ function ContactPage({ onGoToDashboard }) {
                 <tbody>
                     {currentList.map((row, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
-                            {Object.values(row).map((val, i) => (
+                            {Object.values(row)
+                                .slice(1) // 1열제외
+                                .map((val, i) => (
                                 <td
                                     key={i}
                                     className="border px-2 py-1 text-center whitespace-nowrap"
