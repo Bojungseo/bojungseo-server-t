@@ -265,36 +265,23 @@ app.get('/api/search-patients-2', async (req, res) => {
     }
 });
 
-// --- 11. 원수사 연락망 API (Google Sheets 시트 데이터를 그대로 JSON으로 전달)
+// --- 11. 원수사 연락망 API (모든 셀 데이터를 배열로 반환)
 app.get('/api/contacts', async (req, res) => {
     try {
-        // 👉 원수사 연락망용 구글 시트 객체 생성
         const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
-
-        // 시트 메타데이터 로드 (sheet list 불러오기 전에 필요)
         await contactDoc.loadInfo();
-
-        // 첫 번째 시트를 선택
         const sheet = contactDoc.sheetsByIndex[0];
 
-        // 헤더(컬럼명) 불러오기
-        await sheet.loadHeaderRow();
+        // 전체 데이터 불러오기 (헤더 무시)
+        const rows = await sheet.getRows({ offset: 0, limit: 1000 });
 
-        // 전체 데이터 행 가져오기
-        const rows = await sheet.getRows();
+        // Google Sheets API에서 전체 셀 값을 가져오기
+        const rawData = rows.map(row => Object.values(row._rawData)); // 모든 열을 그대로 가져옴
 
-        // 각 행을 일반 객체로 변환
-        const contacts = rows.map(row => row.toObject());
-
-        // 응답 반환
-        res.status(200).json({ success: true, contacts });
-
+        res.status(200).json({ success: true, data: rawData });
     } catch (error) {
-        console.error('[Backend] 원수사 연락망 불러오기 오류:', error);
-        res.status(500).json({
-            success: false,
-            message: '원수사 연락망 조회 중 오류가 발생했습니다.'
-        });
+        console.error('[Backend] 연락망 데이터 불러오기 오류:', error);
+        res.status(500).json({ success: false, message: '원수사 연락망 조회 중 오류 발생' });
     }
 });
 
