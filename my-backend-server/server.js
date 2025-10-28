@@ -268,16 +268,36 @@ app.get('/api/search-patients-2', async (req, res) => {
 // --- 11. 원수사 연락망 API (Google Sheets 시트 데이터를 그대로 JSON으로 전달)
 app.get('/api/contacts', async (req, res) => {
     try {
-        const sheet = patientDoc.sheetsByIndex[0]; // 원수사 연락망 시트 (첫 번째 시트 기준)
-        await sheet.loadHeaderRow(); // 헤더 읽기
+        // 👉 원수사 연락망용 구글 시트 객체 생성
+        const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
+
+        // 시트 메타데이터 로드 (sheet list 불러오기 전에 필요)
+        await contactDoc.loadInfo();
+
+        // 첫 번째 시트를 선택
+        const sheet = contactDoc.sheetsByIndex[0];
+
+        // 헤더(컬럼명) 불러오기
+        await sheet.loadHeaderRow();
+
+        // 전체 데이터 행 가져오기
         const rows = await sheet.getRows();
-        const contacts = rows.map(row => row.toObject()); // 모든 행을 객체로 변환
+
+        // 각 행을 일반 객체로 변환
+        const contacts = rows.map(row => row.toObject());
+
+        // 응답 반환
         res.status(200).json({ success: true, contacts });
+
     } catch (error) {
         console.error('[Backend] 원수사 연락망 불러오기 오류:', error);
-        res.status(500).json({ success: false, message: '원수사 연락망 조회 중 오류가 발생했습니다.' });
+        res.status(500).json({
+            success: false,
+            message: '원수사 연락망 조회 중 오류가 발생했습니다.'
+        });
     }
 });
+
 
 // ✅ 모든 API 라우트 이후에 위치해야 함
 app.use((req, res, next) => {
