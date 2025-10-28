@@ -265,46 +265,54 @@ app.get('/api/search-patients-2', async (req, res) => {
     }
 });
 
-// --- 11. 원수사 연락망 API (Google Sheets 시트 데이터를 그대로 JSON으로 전달)
+// --- 11. 원수사 연락망 API (손해보험 / 생명보험 구분) ---
 app.get('/api/contacts', async (req, res) => {
     try {
         const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
         await contactDoc.loadInfo();
         const sheet = contactDoc.sheetsByIndex[0];
 
-        // 모든 셀 로드
-        await sheet.loadCells();
+        // ✅ 실제 헤더는 3행
+        await sheet.loadHeaderRow(3);
+        const rows = await sheet.getRows();
 
-        const numRows = sheet.rowCount;
-        const numCols = sheet.columnCount;
+        // ✅ 전체 데이터를 객체화
+        const allContacts = rows.map(r => r.toObject());
 
-        // 헤더 행(1행)을 읽어옴
-        const headerRow = [];
-        for (let c = 0; c < numCols; c++) {
-            const cell = sheet.getCell(0, c);
-            if (cell.value) headerRow.push(String(cell.value).trim());
+        // ✅ “손해보험” / “생명보험” 섹션 구분
+        //   - 예: "손해보험" 행 이후 ~ "생명보험" 행 전까지 → 손해보험 그룹
+        const sonhaeIndex = allContacts.findIndex(obj =>
+            Object.values(obj).some(v => typeof v === 'string' && v.includes('손해보험'))
+        );
+        const saengmyeongIndex = allContacts.findIndex(obj =>
+            Object.values(obj).some(v => typeof v === 'string' && v.includes('생명보험'))
+        );
+
+        let sonhae = [];
+        let saengmyeong = [];
+
+        if (sonhaeIndex !== -1 && saengmyeongIndex !== -1) {
+            sonhae = allContacts.slice(sonhaeIndex + 1, saengmyeongIndex);
+            saengmyeong = allContacts.slice(saengmyeongIndex + 1);
+        } else {
+            // 구분 텍스트가 없을 경우 전체를 통으로 반환
+            sonhae = allContacts;
         }
 
-        // 나머지 데이터 행을 2행부터 순회하며 객체로 만듦
-        const rows = [];
-        for (let r = 1; r < numRows; r++) {
-            const rowObj = {};
-            let isEmptyRow = true;
-            for (let c = 0; c < headerRow.length; c++) {
-                const cell = sheet.getCell(r, c);
-                const val = cell.value ? String(cell.value).trim() : '';
-                if (val) isEmptyRow = false;
-                rowObj[headerRow[c]] = val;
-            }
-            if (!isEmptyRow) rows.push(rowObj);
-        }
+        // ✅ 빈 행 제거
+        const clean = (arr) =>
+            arr.filter(row => Object.values(row).some(v => v && v.toString().trim() !== ''));
 
-        res.status(200).json({ success: true, contacts: rows });
+        res.status(200).json({
+            success: true,
+            sonhae: clean(sonhae),
+            saengmyeong: clean(saengmyeong),
+        });
     } catch (error) {
         console.error('[Backend] 원수사 연락망 불러오기 오류:', error);
         res.status(500).json({
             success: false,
-            message: '원수사 연락망 조회 중 오류가 발생했습니다.'
+            message: '원수사 연락망 조회 중 오류가 발생했습니다.',
         });
     }
 });
