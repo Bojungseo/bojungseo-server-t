@@ -285,7 +285,7 @@ app.get('/api/contacts', async (req, res) => {
         const headers = [];
         for (let j = 0; j < colCount; j++) {
             const headerValue = sheet.getCell(2, j).value; // 3행 -> 인덱스 2
-            headers.push(headerValue ? headerValue.toString().trim() : `COLUMN_${j}`);
+            headers.push(headerValue ? headerValue.toString().trim() : '');
         }
 
         // 데이터 객체화
@@ -302,7 +302,7 @@ app.get('/api/contacts', async (req, res) => {
         }
 
         // 기준 행(예: 31행부터 생명보험)
-        const DIVIDE_ROW_INDEX = 32;
+        const DIVIDE_ROW_INDEX = 31;
         const sonhae = allContacts.slice(0, DIVIDE_ROW_INDEX - 3);
         const saengmyeong = allContacts.slice(DIVIDE_ROW_INDEX - 3);
 
