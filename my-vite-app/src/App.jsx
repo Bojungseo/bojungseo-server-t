@@ -301,12 +301,12 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
 
 
   return (
-    <div className="p-4 md:p-8 min-h-screen bg-gray-50">
+    <div className="p-4 md:p-8 min-h-screen bg-gray-50 font-Tenada">
       <div className="w-full">
         {/* --- 상단 헤더 --- */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">보정서 설계사 지원</h1>
+                <h1 className="text-3xl font-bold">설계사 업무지원</h1>
                 <button onClick={onLogout} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">로그아웃</button>
             </div>
         </div>
