@@ -5,7 +5,11 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        myfont: ['Tenada'], // MyFont 등록
+      },
+    },
   },
   plugins: [],
 }
