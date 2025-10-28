@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        myfont: ['Tenada'], // MyFont 등록
+        myfont: ['Tenada', 'sans-serif'], // MyFont 등록
       },
     },
   },
