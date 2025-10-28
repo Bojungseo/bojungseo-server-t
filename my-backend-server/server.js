@@ -265,7 +265,7 @@ app.get('/api/search-patients-2', async (req, res) => {
     }
 });
 
-// --- 11. 원수사 연락망 API (1열 기준으로 손해보험 / 생명보험 구분) ---
+// --- 11. 원수사 연락망 API (특정 행 기준으로 손해보험 / 생명보험 분리) ---
 app.get('/api/contacts', async (req, res) => {
     try {
         const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
@@ -279,32 +279,13 @@ app.get('/api/contacts', async (req, res) => {
         // 전체 행을 객체로 변환
         const allContacts = rows.map(r => r.toObject());
 
-        // ✅ 1열(헤더 기준 첫 번째 컬럼명) 추출
-        const firstCol = Object.keys(allContacts[0])[0]; // 예: "원수사" 또는 "구분"
+        // ✅ 기준 행(예: 31행부터 생명보험으로 간주)
+        // ⚠️ 이 값만 바꾸면 분리 기준 변경 가능!
+        const DIVIDE_ROW_INDEX = 31;
 
-        // ✅ 손해보험 / 생명보험 구분 위치 찾기 (1열 값 기준)
-        const sonhaeIndex = allContacts.findIndex(row =>
-            row[firstCol]?.toString().trim() === '손해보험'
-        );
-        const saengmyeongIndex = allContacts.findIndex(row =>
-            row[firstCol]?.toString().trim() === '생명보험'
-        );
-
-        // ✅ 각 구간 자르기
-        let sonhae = [];
-        let saengmyeong = [];
-
-        if (sonhaeIndex !== -1 && saengmyeongIndex !== -1) {
-            sonhae = allContacts.slice(sonhaeIndex + 1, saengmyeongIndex);
-            saengmyeong = allContacts.slice(saengmyeongIndex + 1);
-        } else if (sonhaeIndex !== -1) {
-            sonhae = allContacts.slice(sonhaeIndex + 1);
-        } else if (saengmyeongIndex !== -1) {
-            saengmyeong = allContacts.slice(saengmyeongIndex + 1);
-        } else {
-            // 혹시 구분이 없으면 전체 반환
-            sonhae = allContacts;
-        }
+        // ✅ 손해보험 / 생명보험 분리
+        const sonhae = allContacts.slice(0, DIVIDE_ROW_INDEX - 3); // 헤더가 3행이므로 보정
+        const saengmyeong = allContacts.slice(DIVIDE_ROW_INDEX - 3);
 
         // ✅ 빈 행 제거
         const clean = (arr) =>
@@ -326,6 +307,7 @@ app.get('/api/contacts', async (req, res) => {
         });
     }
 });
+
 
 
 
