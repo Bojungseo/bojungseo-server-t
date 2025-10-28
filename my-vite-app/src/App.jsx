@@ -1108,8 +1108,7 @@ function ExtraMenu1({ onGoToDashboard }) {
     );
 }
 
-// ExtraMenu2와 연결된 페이지로 API를 통해 스프레드시트 가져오는 코드
-
+// --- ExtraMenu2와 연결된 원수사 연락망 페이지 ---
 function ContactPage({ onGoToDashboard }) {
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -1119,7 +1118,11 @@ function ContactPage({ onGoToDashboard }) {
             try {
                 const res = await fetch(`${BACKEND_URL}/api/contacts`);
                 const data = await res.json();
-                if (data.success) setContacts(data.contacts);
+                if (data.success) {
+                    setContacts(data.contacts);
+                } else {
+                    console.error('원수사 연락망 로드 실패:', data.message);
+                }
             } catch (error) {
                 console.error('원수사 연락망 가져오기 실패:', error);
             } finally {
@@ -1129,24 +1132,50 @@ function ContactPage({ onGoToDashboard }) {
         fetchContacts();
     }, []);
 
-    if (loading) return <div>연락망을 불러오는 중...</div>;
+    if (loading) return <div className="p-4 text-gray-600">📞 원수사 연락망을 불러오는 중...</div>;
+
+    if (!contacts.length)
+        return (
+            <div className="p-4 text-gray-600">
+                <p>⚠️ 표시할 연락망 데이터가 없습니다.</p>
+                <button
+                    onClick={onGoToDashboard}
+                    className="mt-3 px-3 py-1 bg-blue-500 text-white rounded"
+                >
+                    대시보드로 돌아가기
+                </button>
+            </div>
+        );
 
     return (
         <div className="overflow-auto p-4">
-            <button onClick={onGoToDashboard} className="mb-2 px-3 py-1 bg-blue-500 text-white rounded">대시보드로 돌아가기</button>
-            <table className="table-auto border border-gray-300 w-full">
+            <div className="flex justify-between items-center mb-3">
+                <h2 className="text-lg font-semibold">📋 원수사 연락망</h2>
+                <button
+                    onClick={onGoToDashboard}
+                    className="px-3 py-1 bg-blue-500 text-white rounded"
+                >
+                    대시보드로 돌아가기
+                </button>
+            </div>
+
+            <table className="table-auto border border-gray-300 w-full text-sm">
                 <thead>
                     <tr className="bg-gray-200">
-                        {contacts[0] && Object.keys(contacts[0]).map((key) => (
-                            <th key={key} className="border px-2 py-1">{key}</th>
+                        {Object.keys(contacts[0]).map((key) => (
+                            <th key={key} className="border px-2 py-1 text-center">
+                                {key}
+                            </th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
                     {contacts.map((contact, idx) => (
-                        <tr key={idx} className="hover:bg-gray-100">
+                        <tr key={idx} className="hover:bg-gray-50">
                             {Object.values(contact).map((val, i) => (
-                                <td key={i} className="border px-2 py-1">{val}</td>
+                                <td key={i} className="border px-2 py-1 text-center">
+                                    {val || '-'}
+                                </td>
                             ))}
                         </tr>
                     ))}
@@ -1156,23 +1185,12 @@ function ContactPage({ onGoToDashboard }) {
     );
 }
 
-
 // --- MenuPage5 (추가 메뉴 2) ---
 function ExtraMenu2({ onGoToDashboard }) {
-    const [showContacts, setShowContacts] = useState(false);
-
+    // ✅ 버튼 없이, 들어오자마자 바로 ContactPage를 표시
     return (
         <div className="p-4">
-            {!showContacts && (
-                <button
-                    className="px-3 py-1 bg-green-500 text-white rounded"
-                    onClick={() => setShowContacts(true)}
-                >
-                    원수사 연락망
-                </button>
-            )}
-
-            {showContacts && <ContactPage onGoToDashboard={onGoToDashboard} />}
+            <ContactPage onGoToDashboard={onGoToDashboard} />
         </div>
     );
 }
