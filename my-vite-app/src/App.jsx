@@ -1113,129 +1113,58 @@ function ExtraMenu1({ onGoToDashboard }) {
 function ContactPage({ onGoToDashboard }) {
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchContacts = async () => {
-            setLoading(true);
-            setError('');
             try {
                 const res = await fetch(`${BACKEND_URL}/api/contacts`);
                 const data = await res.json();
-                if (data.success) {
-                    setContacts(data.contacts);
-                } else {
-                    setError('데이터를 불러오지 못했습니다.');
-                }
+                if (data.success) setContacts(data.contacts);
             } catch (error) {
                 console.error('원수사 연락망 가져오기 실패:', error);
-                setError('서버 연결 실패 또는 네트워크 오류');
             } finally {
                 setLoading(false);
             }
         };
-
         fetchContacts();
     }, []);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-gray-600 text-lg">연락망을 불러오는 중...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen text-red-500">
-                <p>{error}</p>
-                <button
-                    onClick={onGoToDashboard}
-                    className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                >
-                    대시보드로 돌아가기
-                </button>
-            </div>
-        );
-    }
+    if (loading) return <div>연락망을 불러오는 중...</div>;
 
     return (
-        <div className="p-8 min-h-screen bg-gray-50">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-800">원수사 연락망</h1>
-                    <button
-                        onClick={onGoToDashboard}
-                        className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-                    >
-                        대시보드로 돌아가기
-                    </button>
-                </div>
-
-                <div className="overflow-auto max-h-[70vh]">
-                    <table className="table-auto border border-gray-300 w-full text-sm">
-                        <thead>
-                            <tr className="bg-gray-200">
-                                {contacts[0] &&
-                                    Object.keys(contacts[0]).map((key) => (
-                                        <th key={key} className="border px-2 py-1">
-                                            {key}
-                                        </th>
-                                    ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {contacts.map((contact, idx) => (
-                                <tr key={idx} className="hover:bg-gray-100">
-                                    {Object.values(contact).map((val, i) => (
-                                        <td key={i} className="border px-2 py-1">
-                                            {val || '-'}
-                                        </td>
-                                    ))}
-                                </tr>
+        <div className="overflow-auto p-4">
+            <button onClick={onGoToDashboard} className="mb-2 px-3 py-1 bg-blue-500 text-white rounded">대시보드로 돌아가기</button>
+            <table className="table-auto border border-gray-300 w-full">
+                <thead>
+                    <tr className="bg-gray-200">
+                        {contacts[0] && Object.keys(contacts[0]).map((key) => (
+                            <th key={key} className="border px-2 py-1">{key}</th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {contacts.map((contact, idx) => (
+                        <tr key={idx} className="hover:bg-gray-100">
+                            {Object.values(contact).map((val, i) => (
+                                <td key={i} className="border px-2 py-1">{val}</td>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }
 
-// ===============================
-// ExtraMenu2 (대시보드 메뉴 연결)
-// ===============================
+// --- MenuPage5 (추가 메뉴 2) ---
 function ExtraMenu2({ onGoToDashboard }) {
-    const [showContacts, setShowContacts] = useState(false);
-
-    if (showContacts) {
-        // 버튼 클릭 시 곧바로 ContactPage로 전환됨
-        return (
-            <ContactPage
-                onGoToDashboard={() => {
-                    setShowContacts(false);
-                    onGoToDashboard(); // 대시보드로 복귀
-                }}
-            />
-        );
-    }
-
+    // ExtraMenu2 페이지 진입 시 바로 연락망 페이지 표시
     return (
-        <div className="p-8 min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-            <button
-                className="px-6 py-3 bg-green-500 text-white rounded-lg text-lg shadow hover:bg-green-600 transition"
-                onClick={() => setShowContacts(true)}
-            >
-                원수사 연락망
-            </button>
+        <div className="p-4">
+            <ContactPage onGoToDashboard={onGoToDashboard} />
         </div>
     );
 }
-
-export default ExtraMenu2;
-
-
 
 
 // --- MenuPage6 (추가 메뉴 3) ---
