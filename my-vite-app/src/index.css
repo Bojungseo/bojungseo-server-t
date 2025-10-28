@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'MyFont';
+  font-family: 'Tenada';
   src: url('/Tenada.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
