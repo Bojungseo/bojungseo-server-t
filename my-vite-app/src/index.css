@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @font-face {
   font-family: 'MyFont';
   src: url('/Tenada.ttf') format('truetype');
