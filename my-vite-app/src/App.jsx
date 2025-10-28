@@ -1199,9 +1199,12 @@ function ContactPage({ onGoToDashboard }) {
             <table className="table-auto border border-gray-300 w-full text-sm">
                 <thead>
                     <tr className="bg-gray-200">
-                        {Object.keys(currentList[0]).map((key) => (
-                            <th key={key} className="border px-2 py-1 text-center whitespace-nowrap">
-                                {key}
+                        {Object.keys(currentList[0]).map((key, idx) => (
+                            <th
+                                key={idx}
+                                className="border px-2 py-1 text-center whitespace-nowrap"
+                            >
+                                {key || ' '}
                             </th>
                         ))}
                     </tr>
@@ -1210,7 +1213,10 @@ function ContactPage({ onGoToDashboard }) {
                     {currentList.map((row, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
                             {Object.values(row).map((val, i) => (
-                                <td key={i} className="border px-2 py-1 text-center whitespace-nowrap">
+                                <td
+                                    key={i}
+                                    className="border px-2 py-1 text-center whitespace-nowrap"
+                                >
                                     {val || '-'}
                                 </td>
                             ))}
@@ -1230,6 +1236,7 @@ function ExtraMenu2({ onGoToDashboard }) {
         </div>
     );
 }
+
 
 
 
