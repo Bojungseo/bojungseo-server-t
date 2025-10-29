@@ -104,6 +104,7 @@ async function loadAndCacheContacts() {
         const DIVIDE_ROW_INDEX = 32;
         cachedContacts.sonhae = allContacts.slice(0, DIVIDE_ROW_INDEX - 3);
         cachedContacts.saengmyeong = allContacts.slice(DIVIDE_ROW_INDEX - 3);
+        cachedContacts.lastUpdated = new Date().toISOString(); // ✅ 갱신 시각 기록
 
         console.log(`[Contacts] 캐싱 완료 (손해: ${cachedContacts.sonhae.length}, 생명: ${cachedContacts.saengmyeong.length})`);
     } catch (err) {
@@ -305,7 +306,8 @@ app.get('/api/contacts', async (req, res) => {
         res.status(200).json({
             success: true,
             sonhae: cachedContacts.sonhae,
-            saengmyeong: cachedContacts.saengmyeong
+            saengmyeong: cachedContacts.saengmyeong,
+            cachedAt: cachedContacts.lastUpdated || new Date().toISOString(), // ✅ 캐시 시각
         });
     } catch (error) {
         console.error('[Backend] 원수사 연락망 조회 오류:', error);
