@@ -1116,6 +1116,7 @@ function ContactPage({ onGoToDashboard }) {
     const [saengmyeong, setSaengmyeong] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [cachedAt, setCachedAt] = useState(null); // ✅ 캐싱 시각 표시용 추가
 
     useEffect(() => {
         const fetchContacts = async () => {
@@ -1125,6 +1126,7 @@ function ContactPage({ onGoToDashboard }) {
                 if (data.success) {
                     setSonhae(data.sonhae || []);
                     setSaengmyeong(data.saengmyeong || []);
+                    setCachedAt(data.cachedAt || null); // ✅ 캐싱된 시각 저장
                 } else {
                     setError(data.message || '데이터를 불러오지 못했습니다.');
                 }
@@ -1155,6 +1157,7 @@ function ContactPage({ onGoToDashboard }) {
         );
 
     const currentList = tab === 'sonhae' ? sonhae : saengmyeong;
+
     if (!currentList.length)
         return (
             <div className="p-4 text-gray-600">
@@ -1168,6 +1171,11 @@ function ContactPage({ onGoToDashboard }) {
             </div>
         );
 
+    // ✅ 캐싱 시각을 사람이 읽기 좋은 형태로 변환
+    const formattedTime = cachedAt
+        ? new Date(cachedAt).toLocaleString('ko-KR', { hour12: false })
+        : '알 수 없음';
+
     return (
         <div className="overflow-auto p-4">
             <div className="flex justify-between items-center mb-3">
@@ -1178,6 +1186,11 @@ function ContactPage({ onGoToDashboard }) {
                 >
                     대시보드로 돌아가기
                 </button>
+            </div>
+
+            {/* ✅ 캐시 정보 표시 */}
+            <div className="text-sm text-gray-500 mb-2">
+                🔄 마지막 데이터 갱신: {formattedTime}
             </div>
 
             {/* ✅ 탭 버튼 */}
@@ -1203,13 +1216,13 @@ function ContactPage({ onGoToDashboard }) {
                         {Object.keys(currentList[0])
                             .slice(1) // 1열 제외
                             .map((key, idx) => (
-                            <th
-                                key={idx}
-                                className="border px-2 py-1 text-center whitespace-nowrap"
-                            >
-                                {key || ' '}
-                            </th>
-                        ))}
+                                <th
+                                    key={idx}
+                                    className="border px-2 py-1 text-center whitespace-nowrap"
+                                >
+                                    {key || ' '}
+                                </th>
+                            ))}
                     </tr>
                 </thead>
                 <tbody>
@@ -1218,13 +1231,13 @@ function ContactPage({ onGoToDashboard }) {
                             {Object.values(row)
                                 .slice(1) // 1열제외
                                 .map((val, i) => (
-                                <td
-                                    key={i}
-                                    className="border px-2 py-1 text-center whitespace-nowrap"
-                                >
-                                    {val || '-'}
-                                </td>
-                            ))}
+                                    <td
+                                        key={i}
+                                        className="border px-2 py-1 text-center whitespace-nowrap"
+                                    >
+                                        {val || '-'}
+                                    </td>
+                                ))}
                         </tr>
                     ))}
                 </tbody>
@@ -1233,7 +1246,7 @@ function ContactPage({ onGoToDashboard }) {
     );
 }
 
-// --- MenuPage5 (추가 메뉴 2) ---
+// --- ExtraMenu2 (추가 메뉴 2) ---
 function ExtraMenu2({ onGoToDashboard }) {
     return (
         <div className="p-4">
