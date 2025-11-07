@@ -275,7 +275,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
             { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
             { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
             { label: '원수사 연락망', onClick: onGoToExtra2, managerOnly: true },
-            { label: '질병인수 데이터', onClick: onGoToExtra3, managerOnly: true },
+            { label: '심사데이터 검색', onClick: onGoToExtra3, managerOnly: true },
         ];
 
         return (
@@ -1339,7 +1339,7 @@ function ExtraMenu3({ onGoToDashboard }) {
     <div className="p-8 min-h-screen bg-gray-50">
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">질병 인수 데이터 조회</h2>
+          <h2 className="text-2xl font-bold">질병별 심사 데이터 조회</h2>
           <button
             onClick={onGoToDashboard}
             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
@@ -1414,11 +1414,8 @@ function ExtraMenu3({ onGoToDashboard }) {
                   <th className="border px-3 py-2">상품종류</th>
                   <th className="border px-3 py-2">보험회사</th>
                   <th className="border px-3 py-2">심사일자</th>
-                  <th className="border px-3 py-2">고지내용1</th>
-                  <th className="border px-3 py-2">고지내용2</th>
-                  <th className="border px-3 py-2">고지내용3</th>
-                  <th className="border px-3 py-2">심사결과1</th>
-                  <th className="border px-3 py-2">심사결과2</th>
+                  <th className="border px-3 py-2">고지내용</th>
+                  <th className="border px-3 py-2">심사결과</th>
                 </tr>
               </thead>
               <tbody>
@@ -1432,11 +1429,8 @@ function ExtraMenu3({ onGoToDashboard }) {
                     <td className="border px-3 py-2">{row.상품종류}</td>
                     <td className="border px-3 py-2">{row.보험회사}</td>
                     <td className="border px-3 py-2">{row.심사일자}</td>
-                    <td className="border px-3 py-2">{row.고지내용1}</td>
-                    <td className="border px-3 py-2">{row.고지내용2}</td>
-                    <td className="border px-3 py-2">{row.고지내용3}</td>
-                    <td className="border px-3 py-2">{row.심사결과1}</td>
-                    <td className="border px-3 py-2">{row.심사결과2}</td>
+                    <td className="border px-3 py-2">{row.고지내용}</td>
+                    <td className="border px-3 py-2">{row.심사결과}</td>
                   </tr>
                 ))}
               </tbody>
