@@ -275,7 +275,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
             { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
             { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
             { label: '원수사 연락망', onClick: onGoToExtra2, managerOnly: true },
-            { label: '질병인수 데이터', onClick: onGoToStandardPage, managerOnly: true },
+            { label: '질병인수 데이터', onClick: onGoToExtra3, managerOnly: true },
         ];
 
         return (
