@@ -349,11 +349,11 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
 
             {/* --- 게시판 2 --- */}
             <div className="bg-white p-6 rounded-lg shadow-md h-full">
-                <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">자유 게시판</h2>
+                <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
                 <ul className="space-y-2">
-                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">오늘 점심 메뉴 추천받습니다!</li>
-                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">버튼 색깔이 너무 예쁘네요.</li>
-                    <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">새로운 문의사항을 남겨주세요.</li>
+                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
+                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">우직하게하면 뭐든 평균은 할 수 있다.</li>
+                    <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">일단해라, 그냥해라, 노력해라</li>
                 </ul>
             </div>
         </div>
