@@ -1256,261 +1256,201 @@ function ExtraMenu2({ onGoToDashboard }) {
 }
 
 
+// --- MenuPage6 (추가 메뉴 3: 질병 인수데이터) ---
+function ExtraMenu3({ onGoToDashboard }) {
+  const [keyword, setKeyword] = React.useState("");
+  const [secondaryKeyword, setSecondaryKeyword] = React.useState("");
+  const [selectedGender, setSelectedGender] = React.useState("전체");
+  const [selectedAgeGroup, setSelectedAgeGroup] = React.useState("전체");
+  const [results, setResults] = React.useState([]);
+  const [filtered, setFiltered] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
 
-// --- MenuPageStandard (질병인수데이터) ---
-function MenuPageStandard({ onGoToDashboard }) {
-  const [keyword, setKeyword] = useState('');
-  const [secondaryKeyword, setSecondaryKeyword] = useState('');
-  const [baseResults, setBaseResults] = useState([]);
-  const [displayResults, setDisplayResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [filtersEnabled, setFiltersEnabled] = useState(false);
-  const [genderFilter, setGenderFilter] = useState('무관');
-  const [ageGroup, setAgeGroup] = useState('무관');
-
-  async function apiSearchStandard({ keyword }) {
-    const res = await fetch(`/api/search-standard?keyword=${encodeURIComponent(keyword)}`);
-    if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
-    const json = await res.json();
-    return json.patients || [];
-  }
-
-  const handleInitialSearch = async (e) => {
-    e.preventDefault();
+  // ✅ 병명 검색 (1차)
+  const handleSearch = async () => {
     if (!keyword.trim()) {
-      alert('검색어를 입력해주세요.');
+      alert("검색어를 입력하세요.");
       return;
     }
     setLoading(true);
-    setError('');
-    setFiltersEnabled(false);
-    setSecondaryKeyword('');
-    setGenderFilter('무관');
-    setAgeGroup('무관');
     try {
-      const data = await apiSearchStandard({ keyword });
-      setBaseResults(data);
-      setDisplayResults(data);
-      setFiltersEnabled(true);
+      const res = await fetch(`/api/search-standard?keyword=${encodeURIComponent(keyword)}`);
+      const data = await res.json();
+      if (data.success) {
+        setResults(data.patients || []);
+      } else {
+        alert("데이터를 불러오지 못했습니다.");
+      }
     } catch (err) {
-      setError(err.message);
-      setBaseResults([]);
-      setDisplayResults([]);
+      console.error("검색 오류:", err);
+      alert("검색 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReset = () => {
-    setKeyword('');
-    setSecondaryKeyword('');
-    setBaseResults([]);
-    setDisplayResults([]);
-    setFiltersEnabled(false);
-    setError('');
-    setGenderFilter('무관');
-    setAgeGroup('무관');
-  };
+  // ✅ 2차 병명 + 성별 + 연령 필터링
+  React.useEffect(() => {
+    let temp = results;
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    if (filtersEnabled) handleReset();
-    else handleInitialSearch(e);
-  };
-
-  useEffect(() => {
-    if (!filtersEnabled || baseResults.length === 0) return;
-
-    let filtered = [...baseResults];
-
+    // 2차 병명 필터
     if (secondaryKeyword.trim()) {
-      const kw = secondaryKeyword.trim().toLowerCase();
-      filtered = filtered.filter((p) => p.병명 && p.병명.toLowerCase().includes(kw));
+      temp = temp.filter((row) =>
+        row.병명?.toLowerCase().includes(secondaryKeyword.toLowerCase())
+      );
     }
 
-    if (genderFilter !== '무관') {
-      filtered = filtered.filter((p) => {
-        const gender = (p.성별 || '').trim();
-        if (genderFilter === '모름') return gender === '모름';
-        return gender === genderFilter;
+    // 성별 필터
+    if (selectedGender !== "전체") {
+      temp = temp.filter((row) => {
+        if (!row.성별) return false;
+        return row.성별 === selectedGender;
       });
     }
 
-    if (ageGroup !== '무관') {
-      filtered = filtered.filter((p) => {
-        const ageValue = parseInt(p.나이, 10);
-        if (isNaN(ageValue)) return p.나이 === '모름';
-        const start = parseInt(ageGroup, 10);
-        const end = start + 9;
-        return ageValue >= start && ageValue <= end;
+    // 연령 필터
+    if (selectedAgeGroup !== "전체") {
+      temp = temp.filter((row) => {
+        const age = row.ageNumeric;
+        if (age === null || row.나이Raw === "모름" || row.나이Raw === "무관") {
+          return true; // 모름/무관은 모든 연령대에 포함
+        }
+        switch (selectedAgeGroup) {
+          case "10대": return age >= 10 && age <= 19;
+          case "20대": return age >= 20 && age <= 29;
+          case "30대": return age >= 30 && age <= 39;
+          case "40대": return age >= 40 && age <= 49;
+          case "50대": return age >= 50 && age <= 59;
+          case "60대 이상": return age >= 60;
+          default: return true;
+        }
       });
     }
 
-    setDisplayResults([...filtered]);
-  }, [baseResults, secondaryKeyword, genderFilter, ageGroup, filtersEnabled]);
+    setFiltered(temp);
+  }, [results, secondaryKeyword, selectedGender, selectedAgeGroup]);
+
+  // ✅ 엔터로 검색 실행
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleSearch();
+  };
 
   return (
     <div className="p-8 min-h-screen bg-gray-50">
-      <div className="w-full">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">질병인수데이터 검색</h1>
-            <button
-              onClick={onGoToDashboard}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-            >
-              대시보드로 돌아가기
-            </button>
-          </div>
-
-          <form onSubmit={handleFormSubmit} className="p-4 bg-gray-100 rounded-lg flex flex-col gap-4 border">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <input
-                type="text"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                placeholder="1차 검색: 병명 키워드"
-                disabled={filtersEnabled || loading}
-                className={`flex-grow px-3 py-2 border rounded-md ${filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
-              />
-              <button
-                type="submit"
-                disabled={loading || (!filtersEnabled && !keyword.trim())}
-                className={`w-full md:w-auto text-white px-6 py-2 rounded-md transition-colors 
-                  ${filtersEnabled ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'}
-                  disabled:bg-gray-400`}
-              >
-                {filtersEnabled ? '초기화' : loading ? '검색 중...' : '검색'}
-              </button>
-            </div>
-
-            <div className="p-4 bg-white rounded-md flex flex-col gap-4 border border-dashed border-gray-300">
-              <div className="flex flex-col md:flex-row items-center gap-4 w-full">
-                <select
-                  value={genderFilter}
-                  onChange={(e) => setGenderFilter(e.target.value)}
-                  disabled={!filtersEnabled || loading}
-                  className={`px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
-                >
-                  <option value="무관">성별: 무관</option>
-                  <option value="남성">남성</option>
-                  <option value="여성">여성</option>
-                  <option value="모름">모름</option>
-                </select>
-
-                <select
-                  value={ageGroup}
-                  onChange={(e) => setAgeGroup(e.target.value)}
-                  disabled={!filtersEnabled || loading}
-                  className={`px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
-                >
-                  <option value="무관">연령: 무관</option>
-                  <option value="10">10대</option>
-                  <option value="20">20대</option>
-                  <option value="30">30대</option>
-                  <option value="40">40대</option>
-                  <option value="50">50대</option>
-                  <option value="60">60대</option>
-                  <option value="70">70대</option>
-                  <option value="80">80대 이상</option>
-                </select>
-
-                <input
-                  type="text"
-                  value={secondaryKeyword}
-                  onChange={(e) => setSecondaryKeyword(e.target.value)}
-                  placeholder="2차 필터: 검색 결과 내 병명 재검색"
-                  disabled={!filtersEnabled || loading}
-                  className={`flex-grow px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
-                />
-              </div>
-            </div>
-          </form>
-
-          <div className="mt-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">검색 결과</h2>
-              <span className="text-gray-600 font-medium">
-                {displayResults.length}건 / (원본 {baseResults.length}건)
-              </span>
-            </div>
-
-            {error && <p className="text-center text-red-500 p-4">{error}</p>}
-
-            <div className="overflow-x-auto border rounded-lg">
-              <table className="min-w-full bg-white">
-                <thead className="bg-gray-200">
-                  <tr>
-                    <th className="py-3 px-4 border-b text-left">병명</th>
-                    <th className="py-3 px-4 border-b text-left">보장내용</th>
-                    <th className="py-3 px-4 border-b text-left">상품종류</th>
-                    <th className="py-3 px-4 border-b text-left">보험회사</th>
-                    <th className="py-3 px-4 border-b text-left">심사일자</th>
-                    <th className="py-3 px-4 border-b text-left">고지내용1</th>
-                    <th className="py-3 px-4 border-b text-left">고지내용2</th>
-                    <th className="py-3 px-4 border-b text-left">고지내용3</th>
-                    <th className="py-3 px-4 border-b text-left">심사결과1</th>
-                    <th className="py-3 px-4 border-b text-left">심사결과2</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="10" className="py-4 text-center">검색 중...</td>
-                    </tr>
-                  ) : displayResults.length > 0 ? (
-                    displayResults.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="py-3 px-4 border-b">{row.병명}</td>
-                        <td className="py-3 px-4 border-b">{row.보장내용}</td>
-                        <td className="py-3 px-4 border-b">{row.상품종류}</td>
-                        <td className="py-3 px-4 border-b">{row.보험회사}</td>
-                        <td className="py-3 px-4 border-b">{row.심사일자}</td>
-                        <td className="py-3 px-4 border-b">{row.고지내용1}</td>
-                        <td className="py-3 px-4 border-b">{row.고지내용2}</td>
-                        <td className="py-3 px-4 border-b">{row.고지내용3}</td>
-                        <td className="py-3 px-4 border-b">{row.심사결과1}</td>
-                        <td className="py-3 px-4 border-b">{row.심사결과2}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="10" className="py-4 text-center text-gray-500">
-                        {error ? '오류가 발생했습니다.' : '검색 결과가 없습니다.'}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">질병 인수 데이터 조회</h2>
+          <button
+            onClick={onGoToDashboard}
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+          >
+            대시보드로 돌아가기
+          </button>
         </div>
+
+        {/* 검색 영역 */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <input
+            type="text"
+            placeholder="병명 검색"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="border rounded px-3 py-2 w-60"
+          />
+          <button
+            onClick={handleSearch}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            검색
+          </button>
+
+          <input
+            type="text"
+            placeholder="2차 병명 필터"
+            value={secondaryKeyword}
+            onChange={(e) => setSecondaryKeyword(e.target.value)}
+            className="border rounded px-3 py-2 w-52"
+          />
+
+          <select
+            value={selectedGender}
+            onChange={(e) => setSelectedGender(e.target.value)}
+            className="border rounded px-3 py-2"
+          >
+            <option value="전체">성별: 전체</option>
+            <option value="남성">남성</option>
+            <option value="여성">여성</option>
+            <option value="무관">무관</option>
+            <option value="모름">모름</option>
+          </select>
+
+          <select
+            value={selectedAgeGroup}
+            onChange={(e) => setSelectedAgeGroup(e.target.value)}
+            className="border rounded px-3 py-2"
+          >
+            <option value="전체">연령대: 전체</option>
+            <option value="10대">10대</option>
+            <option value="20대">20대</option>
+            <option value="30대">30대</option>
+            <option value="40대">40대</option>
+            <option value="50대">50대</option>
+            <option value="60대 이상">60대 이상</option>
+          </select>
+        </div>
+
+        {/* 로딩 중 */}
+        {loading && <p className="text-gray-500">불러오는 중...</p>}
+
+        {/* 결과 테이블 */}
+        {!loading && filtered.length > 0 && (
+          <div className="overflow-x-auto mt-4 border rounded-lg">
+            <table className="min-w-full border-collapse text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-3 py-2">병명</th>
+                  <th className="border px-3 py-2">보장내용</th>
+                  <th className="border px-3 py-2">상품종류</th>
+                  <th className="border px-3 py-2">보험회사</th>
+                  <th className="border px-3 py-2">심사일자</th>
+                  <th className="border px-3 py-2">고지내용1</th>
+                  <th className="border px-3 py-2">고지내용2</th>
+                  <th className="border px-3 py-2">고지내용3</th>
+                  <th className="border px-3 py-2">심사결과1</th>
+                  <th className="border px-3 py-2">심사결과2</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((row, idx) => (
+                  <tr
+                    key={row.id || idx}
+                    className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                  >
+                    <td className="border px-3 py-2 whitespace-nowrap">{row.병명}</td>
+                    <td className="border px-3 py-2">{row.보장내용}</td>
+                    <td className="border px-3 py-2">{row.상품종류}</td>
+                    <td className="border px-3 py-2">{row.보험회사}</td>
+                    <td className="border px-3 py-2">{row.심사일자}</td>
+                    <td className="border px-3 py-2">{row.고지내용1}</td>
+                    <td className="border px-3 py-2">{row.고지내용2}</td>
+                    <td className="border px-3 py-2">{row.고지내용3}</td>
+                    <td className="border px-3 py-2">{row.심사결과1}</td>
+                    <td className="border px-3 py-2">{row.심사결과2}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 검색 결과 없음 */}
+        {!loading && results.length > 0 && filtered.length === 0 && (
+          <p className="text-gray-500 mt-3">조건에 맞는 데이터가 없습니다.</p>
+        )}
       </div>
     </div>
   );
-}
-
-
-// --- MenuPage6 (추가 메뉴 3) ---
-function ExtraMenu3({ onGoToDashboard }) {
-    return (
-        <div className="p-8 min-h-screen bg-gray-50">
-            <div className="w-full">
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">질병 인수데이터</h1>
-                        <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                            대시보드로 돌아가기
-                        </button>
-                    </div>
-                    <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-                        <p className="font-semibold">이곳은 '추가 메뉴 3'의 콘텐츠입니다.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
 }
 
 
@@ -1626,7 +1566,7 @@ function App() {
         case 'extra2':
             return <ExtraMenu2 onGoToDashboard={() => setCurrentPage('dashboard')} />;
         case 'extra3':
-            return <MenuPageStandard onGoToDashboard={() => setCurrentPage('dashboard')} />;
+            return <ExtraMenu3 onGoToDashboard={() => setCurrentPage('dashboard')} />;
         default:
             handleLogout();
             return <LoginPage onLogin={handleLogin} onShowRegisterModal={() => setShowRegisterModal(true)} />; // 기본값 처리 시에도 모달 표시 함수 전달
