@@ -1426,9 +1426,9 @@ function ExtraMenu3({ onGoToDashboard }) {
                   >
                     <td className="border px-3 py-2 whitespace-nowrap">{row.병명}</td>
                     <td className="border px-3 py-2">{row.보장내용}</td>
-                    <td className="border px-3 py-2">{row.상품종류}</td>
-                    <td className="border px-3 py-2">{row.보험회사}</td>
-                    <td className="border px-3 py-2">{row.심사일자}</td>
+                    <td className="border px-3 py-2 whitespace-nowrap">{row.상품종류}</td>
+                    <td className="border px-3 py-2 whitespace-nowrap">{row.보험회사}</td>
+                    <td className="border px-3 py-2 whitespace-nowrap">{row.심사일자}</td>
                     <td className="border px-3 py-2">{row.고지내용}</td>
                     <td className="border px-3 py-2">{row.심사결과}</td>
                   </tr>
