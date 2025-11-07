@@ -275,7 +275,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
             { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
             { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
             { label: '원수사 연락망', onClick: onGoToExtra2, managerOnly: true },
-            { label: '질병인수 데이터', onClick: onGoToExtra3, managerOnly: true },
+            { label: '질병인수 데이터', onClick: onGoToStandardPage, managerOnly: true },
         ];
 
         return (
@@ -1257,6 +1257,239 @@ function ExtraMenu2({ onGoToDashboard }) {
 
 
 
+// --- MenuPageStandard (질병인수데이터) ---
+function MenuPageStandard({ onGoToDashboard }) {
+  const [keyword, setKeyword] = useState('');
+  const [secondaryKeyword, setSecondaryKeyword] = useState('');
+  const [baseResults, setBaseResults] = useState([]);
+  const [displayResults, setDisplayResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [filtersEnabled, setFiltersEnabled] = useState(false);
+  const [genderFilter, setGenderFilter] = useState('무관');
+  const [ageGroup, setAgeGroup] = useState('무관');
+
+  async function apiSearchStandard({ keyword }) {
+    const res = await fetch(`/api/search-standard?keyword=${encodeURIComponent(keyword)}`);
+    if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
+    const json = await res.json();
+    return json.patients || [];
+  }
+
+  const handleInitialSearch = async (e) => {
+    e.preventDefault();
+    if (!keyword.trim()) {
+      alert('검색어를 입력해주세요.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setFiltersEnabled(false);
+    setSecondaryKeyword('');
+    setGenderFilter('무관');
+    setAgeGroup('무관');
+    try {
+      const data = await apiSearchStandard({ keyword });
+      setBaseResults(data);
+      setDisplayResults(data);
+      setFiltersEnabled(true);
+    } catch (err) {
+      setError(err.message);
+      setBaseResults([]);
+      setDisplayResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setKeyword('');
+    setSecondaryKeyword('');
+    setBaseResults([]);
+    setDisplayResults([]);
+    setFiltersEnabled(false);
+    setError('');
+    setGenderFilter('무관');
+    setAgeGroup('무관');
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (filtersEnabled) handleReset();
+    else handleInitialSearch(e);
+  };
+
+  useEffect(() => {
+    if (!filtersEnabled || baseResults.length === 0) return;
+
+    let filtered = [...baseResults];
+
+    if (secondaryKeyword.trim()) {
+      const kw = secondaryKeyword.trim().toLowerCase();
+      filtered = filtered.filter((p) => p.병명 && p.병명.toLowerCase().includes(kw));
+    }
+
+    if (genderFilter !== '무관') {
+      filtered = filtered.filter((p) => {
+        const gender = (p.성별 || '').trim();
+        if (genderFilter === '모름') return gender === '모름';
+        return gender === genderFilter;
+      });
+    }
+
+    if (ageGroup !== '무관') {
+      filtered = filtered.filter((p) => {
+        const ageValue = parseInt(p.나이, 10);
+        if (isNaN(ageValue)) return p.나이 === '모름';
+        const start = parseInt(ageGroup, 10);
+        const end = start + 9;
+        return ageValue >= start && ageValue <= end;
+      });
+    }
+
+    setDisplayResults([...filtered]);
+  }, [baseResults, secondaryKeyword, genderFilter, ageGroup, filtersEnabled]);
+
+  return (
+    <div className="p-8 min-h-screen bg-gray-50">
+      <div className="w-full">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">질병인수데이터 검색</h1>
+            <button
+              onClick={onGoToDashboard}
+              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+            >
+              대시보드로 돌아가기
+            </button>
+          </div>
+
+          <form onSubmit={handleFormSubmit} className="p-4 bg-gray-100 rounded-lg flex flex-col gap-4 border">
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <input
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="1차 검색: 병명 키워드"
+                disabled={filtersEnabled || loading}
+                className={`flex-grow px-3 py-2 border rounded-md ${filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
+              />
+              <button
+                type="submit"
+                disabled={loading || (!filtersEnabled && !keyword.trim())}
+                className={`w-full md:w-auto text-white px-6 py-2 rounded-md transition-colors 
+                  ${filtersEnabled ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-500 hover:bg-blue-600'}
+                  disabled:bg-gray-400`}
+              >
+                {filtersEnabled ? '초기화' : loading ? '검색 중...' : '검색'}
+              </button>
+            </div>
+
+            <div className="p-4 bg-white rounded-md flex flex-col gap-4 border border-dashed border-gray-300">
+              <div className="flex flex-col md:flex-row items-center gap-4 w-full">
+                <select
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  disabled={!filtersEnabled || loading}
+                  className={`px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
+                >
+                  <option value="무관">성별: 무관</option>
+                  <option value="남성">남성</option>
+                  <option value="여성">여성</option>
+                  <option value="모름">모름</option>
+                </select>
+
+                <select
+                  value={ageGroup}
+                  onChange={(e) => setAgeGroup(e.target.value)}
+                  disabled={!filtersEnabled || loading}
+                  className={`px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
+                >
+                  <option value="무관">연령: 무관</option>
+                  <option value="10">10대</option>
+                  <option value="20">20대</option>
+                  <option value="30">30대</option>
+                  <option value="40">40대</option>
+                  <option value="50">50대</option>
+                  <option value="60">60대</option>
+                  <option value="70">70대</option>
+                  <option value="80">80대 이상</option>
+                </select>
+
+                <input
+                  type="text"
+                  value={secondaryKeyword}
+                  onChange={(e) => setSecondaryKeyword(e.target.value)}
+                  placeholder="2차 필터: 검색 결과 내 병명 재검색"
+                  disabled={!filtersEnabled || loading}
+                  className={`flex-grow px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
+                />
+              </div>
+            </div>
+          </form>
+
+          <div className="mt-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">검색 결과</h2>
+              <span className="text-gray-600 font-medium">
+                {displayResults.length}건 / (원본 {baseResults.length}건)
+              </span>
+            </div>
+
+            {error && <p className="text-center text-red-500 p-4">{error}</p>}
+
+            <div className="overflow-x-auto border rounded-lg">
+              <table className="min-w-full bg-white">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="py-3 px-4 border-b text-left">병명</th>
+                    <th className="py-3 px-4 border-b text-left">보장내용</th>
+                    <th className="py-3 px-4 border-b text-left">상품종류</th>
+                    <th className="py-3 px-4 border-b text-left">보험회사</th>
+                    <th className="py-3 px-4 border-b text-left">심사일자</th>
+                    <th className="py-3 px-4 border-b text-left">고지내용1</th>
+                    <th className="py-3 px-4 border-b text-left">고지내용2</th>
+                    <th className="py-3 px-4 border-b text-left">고지내용3</th>
+                    <th className="py-3 px-4 border-b text-left">심사결과1</th>
+                    <th className="py-3 px-4 border-b text-left">심사결과2</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="10" className="py-4 text-center">검색 중...</td>
+                    </tr>
+                  ) : displayResults.length > 0 ? (
+                    displayResults.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="py-3 px-4 border-b">{row.병명}</td>
+                        <td className="py-3 px-4 border-b">{row.보장내용}</td>
+                        <td className="py-3 px-4 border-b">{row.상품종류}</td>
+                        <td className="py-3 px-4 border-b">{row.보험회사}</td>
+                        <td className="py-3 px-4 border-b">{row.심사일자}</td>
+                        <td className="py-3 px-4 border-b">{row.고지내용1}</td>
+                        <td className="py-3 px-4 border-b">{row.고지내용2}</td>
+                        <td className="py-3 px-4 border-b">{row.고지내용3}</td>
+                        <td className="py-3 px-4 border-b">{row.심사결과1}</td>
+                        <td className="py-3 px-4 border-b">{row.심사결과2}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="10" className="py-4 text-center text-gray-500">
+                        {error ? '오류가 발생했습니다.' : '검색 결과가 없습니다.'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 
 // --- MenuPage6 (추가 메뉴 3) ---
@@ -1322,7 +1555,9 @@ function App() {
     setUser(null);
     setCurrentPage('login');
   };
-  
+
+  const onGoToStandardPage = () => setCurrentPage('menuPageStandard');  
+    
   const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   const handleRegisterSuccess = () => {
@@ -1371,6 +1606,8 @@ function App() {
                         onGoToExtra1={() => setCurrentPage('extra1')}
                         onGoToExtra2={() => setCurrentPage('extra2')}
                         onGoToExtra3={() => setCurrentPage('extra3')}
+                        onGoToStandardPage={() => setCurrentPage('menuPageStandard')} // ✅ 추가
+
                     />;
         case 'adminPanel':
             if (user.grade !== '최고 관리자') {
@@ -1389,7 +1626,7 @@ function App() {
         case 'extra2':
             return <ExtraMenu2 onGoToDashboard={() => setCurrentPage('dashboard')} />;
         case 'extra3':
-            return <ExtraMenu3 onGoToDashboard={() => setCurrentPage('dashboard')} />;
+            return <MenuPageStandard onGoToDashboard={() => setCurrentPage('dashboard')} />;
         default:
             handleLogout();
             return <LoginPage onLogin={handleLogin} onShowRegisterModal={() => setShowRegisterModal(true)} />; // 기본값 처리 시에도 모달 표시 함수 전달
