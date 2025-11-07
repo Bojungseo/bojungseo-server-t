@@ -75,6 +75,7 @@ async function loadAndCachePatientData(doc, cacheArray) {
     }
 }
 
+
 // ✨ 원수사 연락망 캐싱 함수
 async function loadAndCacheContacts() {
     try {
@@ -115,6 +116,76 @@ async function loadAndCacheContacts() {
         console.error('[Contacts] 캐싱 중 오류 발생:', err);
     }
 }
+
+// ================================================================
+// ➌ standard 시트: "맨 처음 시트"만 읽어서 캐시하는 함수
+// - 다양한 컬럼명이 존재할 수 있으므로 row.toObject()를 사용하여 유연하게 처리
+// - 나이 컬럼은 숫자로 파싱 가능하면 ageNumeric으로 저장, 아니면 null
+// - id는 crypto.randomUUID()로 부여 (원본 행 번호를 사용하려면 row._rowNumber 사용 가능)
+// ================================================================
+async function loadAndCacheStandard() {
+    try {
+        // 문서 정보가 로드되지 않았다면 로드
+        if (!standardDoc.title) await standardDoc.loadInfo();
+
+        if (!standardDoc.sheetsByIndex || standardDoc.sheetsByIndex.length === 0) {
+            console.warn('[Standard] 시트가 없습니다.');
+            standardCache = [];
+            return;
+        }
+
+        const sheet = standardDoc.sheetsByIndex[0]; // ✅ 맨 처음 시트만 사용
+        console.log(`[Standard] 첫 번째 시트 로딩: "${sheet.title}"`);
+
+        const rows = await sheet.getRows();
+        const mapped = rows.map(row => {
+            const obj = row.toObject();
+
+            // 유연한 필드 추출 (컬럼명이 정확히 일치하지 않아도 최대한 잡아냄)
+            const 병명 = obj.병명 ?? obj['병명(한글)'] ?? obj['disease'] ?? obj['name'] ?? '';
+            const 성별 = (obj.성별 ?? obj.gender ?? '').toString().trim();
+            const 나이Raw = obj.나이 ?? obj.age ?? '';
+            const 나이Parsed = (typeof 나이Raw === 'number') ? Math.floor(나이Raw) :
+                                (typeof 나이Raw === 'string' && 나이Raw.trim() !== '' && !isNaN(parseInt(나이Raw, 10)))
+                                    ? parseInt(나이Raw, 10)
+                                    : null;
+            const 보험회사 = obj.보험회사 ?? obj.company ?? '';
+            const 상품종류 = obj.상품종류 ?? obj.product ?? '';
+            const 보장내용 = obj.보장내용 ?? obj.coverage ?? '';
+            const 고지내용1 = obj.고지내용1 ?? obj.notice1 ?? '';
+            const 고지내용2 = obj.고지내용2 ?? obj.notice2 ?? '';
+            const 고지내용3 = obj.고지내용3 ?? obj.notice3 ?? '';
+            const 심사일자 = obj.심사일자 ?? obj.date ?? '';
+            const 심사결과1 = obj.심사결과1 ?? obj.result1 ?? '';
+            const 심사결과2 = obj.심사결과2 ?? obj.result2 ?? '';
+
+            return {
+                id: crypto.randomUUID(), // 고유 id (원하면 row._rowNumber 사용)
+                원본행: row._rowNumber,
+                병명,
+                성별,
+                나이Raw: (나이Raw === undefined || 나이Raw === null) ? '' : String(나이Raw).trim(),
+                ageNumeric: 나이Parsed, // 숫자로 파싱 가능하면 숫자, 아니면 null
+                보험회사,
+                상품종류,
+                보장내용,
+                고지내용1,
+                고지내용2,
+                고지내용3,
+                심사일자,
+                심사결과1,
+                심사결과2,
+            };
+        });
+
+        standardCache = mapped;
+        console.log(`[Standard] 캐싱 완료: ${standardCache.length}건`);
+    } catch (err) {
+        console.error('[Standard] 캐싱 중 오류 발생:', err);
+    }
+}
+
+
 
 // =================================================================
 // Express 앱 설정 및 API 라우트
@@ -324,20 +395,24 @@ app.get('/api/contacts', async (req, res) => {
 
 // --- 12. 질병인수데이터 API (캐싱 사용) ---
 app.get('/api/search-standard', async (req, res) => {
-  const { keyword } = req.query;
-  console.log(`[Backend] 표준 질병인수 검색 요청: keyword=${keyword}`);
-  try {
-    const filteredRows = !keyword
-      ? standardCache
-      : standardCache.filter(patient =>
-          patient.병명 && patient.병명.includes(keyword)
-        );
+    const { keyword } = req.query;
+    console.log(`[Backend] /api/search-standard 요청, keyword=${keyword}`);
 
-    res.status(200).json({ success: true, patients: filteredRows });
-  } catch (error) {
-    console.error('[Backend] 표준 시트 검색 중 오류:', error);
-    res.status(500).json({ success: false, message: '검색 중 오류가 발생했습니다.' });
-  }
+    try {
+        if (!standardCache || standardCache.length === 0) {
+            // 캐시가 비어있을 경우 한 번 로드 시도 (안전장치)
+            await loadAndCacheStandard();
+        }
+
+        const results = (!keyword || !keyword.trim())
+            ? standardCache
+            : standardCache.filter(p => p.병명 && p.병명.includes(keyword));
+
+        res.status(200).json({ success: true, patients: results });
+    } catch (err) {
+        console.error('[Backend] /api/search-standard 처리 중 오류:', err);
+        res.status(500).json({ success: false, message: '표준 시트 검색 중 오류가 발생했습니다.' });
+    }
 });
 
 
@@ -378,7 +453,8 @@ async function startServer() {
         await loadAndCachePatientData(standardDoc, standardCache);
         await loadAndCacheContacts(); // 초기 연락망 캐싱
         setInterval(loadAndCacheContacts, 180000); // 3분마다 연락망 갱신
-
+        setInterval(loadAndCacheStandard, 3600000);  // 3분마다 standard 캐시 갱신
+      
         const memoryAfter = process.memoryUsage().heapUsed;
         console.log(`[Memory] 캐싱 후 힙(Heap) 메모리 사용량: ${formatBytes(memoryAfter)}`);
 
