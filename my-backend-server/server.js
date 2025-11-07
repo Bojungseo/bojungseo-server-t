@@ -152,12 +152,9 @@ async function loadAndCacheStandard() {
             const 보험회사 = obj.보험회사 ?? obj.company ?? '';
             const 상품종류 = obj.상품종류 ?? obj.product ?? '';
             const 보장내용 = obj.보장내용 ?? obj.coverage ?? '';
-            const 고지내용1 = obj.고지내용1 ?? obj.notice1 ?? '';
-            const 고지내용2 = obj.고지내용2 ?? obj.notice2 ?? '';
-            const 고지내용3 = obj.고지내용3 ?? obj.notice3 ?? '';
+            const 고지내용 = obj.고지내용 ?? obj.notice1 ?? '';
             const 심사일자 = obj.심사일자 ?? obj.date ?? '';
-            const 심사결과1 = obj.심사결과1 ?? obj.result1 ?? '';
-            const 심사결과2 = obj.심사결과2 ?? obj.result2 ?? '';
+            const 심사결과 = obj.심사결과 ?? obj.result1 ?? '';
 
             return {
                 id: crypto.randomUUID(), // 고유 id (원하면 row._rowNumber 사용)
@@ -169,12 +166,9 @@ async function loadAndCacheStandard() {
                 보험회사,
                 상품종류,
                 보장내용,
-                고지내용1,
-                고지내용2,
-                고지내용3,
+                고지내용,
                 심사일자,
-                심사결과1,
-                심사결과2,
+                심사결과,
             };
         });
 
@@ -453,7 +447,7 @@ async function startServer() {
         await loadAndCachePatientData(standardDoc, standardCache);
         await loadAndCacheContacts(); // 초기 연락망 캐싱
         setInterval(loadAndCacheContacts, 180000); // 3분마다 연락망 갱신
-        setInterval(loadAndCacheStandard, 3600000);  // 3분마다 standard 캐시 갱신
+        setInterval(loadAndCacheStandard, 600000);  // 3분마다 standard 캐시 갱신
       
         const memoryAfter = process.memoryUsage().heapUsed;
         console.log(`[Memory] 캐싱 후 힙(Heap) 메모리 사용량: ${formatBytes(memoryAfter)}`);
