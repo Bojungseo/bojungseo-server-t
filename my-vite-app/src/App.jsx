@@ -1413,7 +1413,7 @@ function ExtraMenu3({ onGoToDashboard }) {
                   <th className="border px-3 py-2">보장내용</th>
                   <th className="border px-3 py-2">상품종류</th>
                   <th className="border px-3 py-2">보험회사</th>
-                  <th className="border px-3 py-2">심사일자</th>
+                  <th className="border px-3 py-2 whitespace-nowrap">심사일자</th>
                   <th className="border px-3 py-2">고지내용</th>
                   <th className="border px-3 py-2">심사결과</th>
                 </tr>
@@ -1425,7 +1425,7 @@ function ExtraMenu3({ onGoToDashboard }) {
                     className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                   >
                     <td className="border px-3 py-2 whitespace-nowrap">{row.병명}</td>
-                    <td className="border px-3 py-2">{row.보장내용}</td>
+                    <td className="border px-3 py-2 whitespace-nowrap">{row.보장내용}</td>
                     <td className="border px-3 py-2 whitespace-nowrap">{row.상품종류}</td>
                     <td className="border px-3 py-2 whitespace-nowrap">{row.보험회사}</td>
                     <td className="border px-3 py-2 whitespace-nowrap">{row.심사일자}</td>
