@@ -199,7 +199,7 @@ function SuccessModal({ onClose }) {
 
 
 // --- DashboardPage 컴포넌트 (변경 없음) ---
-function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGoToMenuPage2, onGoToSettings, onGoToExtra1, onGoToExtra2, onGoToExtra3 }) {
+function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGoToMenuPage2, onGoToSettings, onGoToExtra1, onGoToExtra2, onGoToExtra3, onGoToStandardPage }) {
     // 남은 시간을 초 단위로 저장하는 상태 (60분 = 3600초)
     const [remainingTime, setRemainingTime] = useState(0);
 
