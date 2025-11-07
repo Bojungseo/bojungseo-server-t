@@ -17,6 +17,7 @@ const AUTH_SPREADSHEET_ID = '1yfPB1mhLnYP59SIRJNsPjiug-3glypQcB1zu4ODXQVs';
 const PATIENT_SPREADSHEET_ID = '1R7sNFwF0g-_ii6wNxol3-1xBQUbxnioE3ST70REvpNM'; 
 const PATIENT2_SPREADSHEET_ID = '1vsnRcJ4JxO3xwmecWX8pAd6Mr_Wpxf-eyzpkcxb9mBI'; 
 const CONTACT_SPREADSHEET_ID = '14V02SniJzspB-nEYArxrCIEOwhClL3HC94qP8sWZA-s'; 
+const STANDARD_SPREADSHEET_ID = '1_dCZkV8-Sun-xphkSi2qlN31Q5FvYQEEv70Mu7tadfA'; 
 
 // --- 구글 시트 인증 ---
 const serviceAccountAuth = new JWT({
@@ -32,6 +33,7 @@ const authDoc = new GoogleSpreadsheet(AUTH_SPREADSHEET_ID, serviceAccountAuth);
 const patientDoc = new GoogleSpreadsheet(PATIENT_SPREADSHEET_ID, serviceAccountAuth);
 const patientDoc2 = new GoogleSpreadsheet(PATIENT2_SPREADSHEET_ID, serviceAccountAuth);
 const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountAuth);
+const standardDoc = new GoogleSpreadsheet(STANDARD_SPREADSHEET_ID, serviceAccountAuth);
 
 // =================================================================
 // 데이터 캐싱 로직
@@ -39,6 +41,8 @@ const contactDoc = new GoogleSpreadsheet(CONTACT_SPREADSHEET_ID, serviceAccountA
 let patientCache = []; 
 let patientCache2 = []; 
 let cachedContacts = { sonhae: [], saengmyeong: [] }; // 원수사 연락망 캐싱
+let standardCache = []; // standard 전용 데이터 캐시
+
 
 async function loadAndCachePatientData(doc, cacheArray) { 
     const cacheName = (cacheArray === patientCache) ? '1차 캐시' : '2차 캐시';
@@ -318,6 +322,26 @@ app.get('/api/contacts', async (req, res) => {
     }
 });
 
+// --- 12. 질병인수데이터 API (캐싱 사용) ---
+app.get('/api/search-standard', async (req, res) => {
+  const { keyword } = req.query;
+  console.log(`[Backend] 표준 질병인수 검색 요청: keyword=${keyword}`);
+  try {
+    const filteredRows = !keyword
+      ? standardCache
+      : standardCache.filter(patient =>
+          patient.병명 && patient.병명.includes(keyword)
+        );
+
+    res.status(200).json({ success: true, patients: filteredRows });
+  } catch (error) {
+    console.error('[Backend] 표준 시트 검색 중 오류:', error);
+    res.status(500).json({ success: false, message: '검색 중 오류가 발생했습니다.' });
+  }
+});
+
+
+
 // ✅ 모든 API 라우트 이후에 위치해야 함
 app.use((req, res, next) => {
   if (req.originalUrl.startsWith('/api/')) return next();
@@ -338,17 +362,20 @@ function formatBytes(bytes, decimals = 2) {
 
 async function startServer() {
     try {
-        await Promise.all([authDoc.loadInfo(), patientDoc.loadInfo(), patientDoc2.loadInfo(), contactDoc.loadInfo()]);
+        await Promise.all([authDoc.loadInfo(), patientDoc.loadInfo(), patientDoc2.loadInfo(), contactDoc.loadInfo(), standardDoc.loadInfo()]);
         console.log(`✅ 사용자 DB 시트 "${authDoc.title}"에 연결되었습니다.`);
         console.log(`✅ 환자 1차 DB 시트 "${patientDoc.title}"에 연결되었습니다.`);
         console.log(`✅ 환자 2차 DB 시트 "${patientDoc2.title}"에 연결되었습니다.`);
         console.log(`✅ 원수사 연락망 시트 "${contactDoc.title}"에 연결되었습니다.`);
+        console.log(`✅ 질병인수데이터 DB 시트 "${standardDoc.title}" 연결됨.`); // ✅ 추가
 
+      
         const memoryBefore = process.memoryUsage().heapUsed;
         console.log(`\n[Memory] 캐싱 전 힙(Heap) 메모리 사용량: ${formatBytes(memoryBefore)}`);
 
         await loadAndCachePatientData(patientDoc, patientCache);
         await loadAndCachePatientData(patientDoc2, patientCache2);
+        await loadAndCachePatientData(standardDoc, standardCache);
         await loadAndCacheContacts(); // 초기 연락망 캐싱
         setInterval(loadAndCacheContacts, 180000); // 3분마다 연락망 갱신
 
