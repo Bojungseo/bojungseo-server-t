@@ -1073,7 +1073,6 @@ function SettingsPage({ onGoToDashboard }) {
         window.open(url, "_blank", "noopener,noreferrer");
     };
 
-    // 좌측/우측 배열로 분리
     const leftUsers = users.filter(user => user.column === "left");
     const rightUsers = users.filter(user => user.column === "right");
 
@@ -1092,8 +1091,10 @@ function SettingsPage({ onGoToDashboard }) {
                     </div>
 
                     {/* 좌우 두 열 */}
-                    <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                        {/* 좌측 */}
                         <div className="space-y-4">
+                            <h2 className="text-xl font-bold mb-2">손해보험</h2>
                             {leftUsers.map((user, idx) => (
                                 <div key={idx} className="flex justify-between items-center p-4 bg-gray-100 rounded-lg shadow-sm">
                                     <span className="font-semibold">{user.name}</span>
@@ -1107,7 +1108,9 @@ function SettingsPage({ onGoToDashboard }) {
                             ))}
                         </div>
 
+                        {/* 우측 */}
                         <div className="space-y-4">
+                            <h2 className="text-xl font-bold mb-2">생명보험</h2>
                             {rightUsers.map((user, idx) => (
                                 <div key={idx} className="flex justify-between items-center p-4 bg-gray-100 rounded-lg shadow-sm">
                                     <span className="font-semibold">{user.name}</span>
