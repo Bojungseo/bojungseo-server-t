@@ -177,8 +177,6 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
     );
 }
 
-export default LoginPage;
-
 function RequestIdModal({ onClose, onRegisterSuccess }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
