@@ -1073,6 +1073,10 @@ function SettingsPage({ onGoToDashboard }) {
         window.open(url, "_blank", "noopener,noreferrer");
     };
 
+    // 좌측/우측 배열로 분리
+    const leftUsers = users.filter(user => user.column === "left");
+    const rightUsers = users.filter(user => user.column === "right");
+
     return (
         <div className="p-8 min-h-screen bg-gray-50">
             <div className="w-full">
@@ -1087,24 +1091,37 @@ function SettingsPage({ onGoToDashboard }) {
                         </button>
                     </div>
 
-                    {/* 2열 그리드로 여러 항목 표시 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        {users.map((user, index) => (
-                            <div key={index} className="flex justify-between items-center p-4 bg-gray-100 rounded-lg shadow-sm">
-                                <span className="font-semibold">{user.name}</span>
-                                <button
-                                    onClick={() => handleWebsiteRedirect(user.url)}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                                >
-                                    웹사이트 방문
-                                </button>
-                            </div>
-                        ))}
+                    {/* 좌우 두 열 */}
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="space-y-4">
+                            {leftUsers.map((user, idx) => (
+                                <div key={idx} className="flex justify-between items-center p-4 bg-gray-100 rounded-lg shadow-sm">
+                                    <span className="font-semibold">{user.name}</span>
+                                    <button
+                                        onClick={() => handleWebsiteRedirect(user.url)}
+                                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                    >
+                                        웹사이트 방문
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="space-y-4">
+                            {rightUsers.map((user, idx) => (
+                                <div key={idx} className="flex justify-between items-center p-4 bg-gray-100 rounded-lg shadow-sm">
+                                    <span className="font-semibold">{user.name}</span>
+                                    <button
+                                        onClick={() => handleWebsiteRedirect(user.url)}
+                                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                    >
+                                        웹사이트 방문
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-                        <p className="font-semibold">비교설명서에 필요한 각보험사 예정이율 사이트 바로가기 입니다.</p>
-                    </div>
                 </div>
             </div>
         </div>
