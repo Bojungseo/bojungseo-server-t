@@ -179,92 +179,56 @@ app.use(express.static(frontendDistPath));
 const activeLogins = new Map(); // username -> { lastPing: timestamp }
 
 // --- 1. 로그인 API ---
-app.post('/api/login', async (req, res) => {
-    const { username, password, forceLogin } = req.body;
-    try {
-        const sheet = authDoc.sheetsByTitle['users'];
-        const rows = await sheet.getRows();
-        const userRow = rows.find(row => row.get('username') === username);
+app.post('/api/login', (req, res) => {
+    const { username, password, forceLogin } = req.body; // ✅ forceLogin 추가
+    const user = users.find(u => u.username === username && u.password === password);
+    if (!user) return res.status(401).json({ success: false, message: '아이디 또는 비밀번호가 틀립니다.' });
 
-        if (!userRow) return res.status(404).json({ message: '존재하지 않는 아이디입니다.' });
-        if (userRow.get('password') !== password) return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
-
-        // 🔒 동시 로그인 체크
-        const active = activeLogins.get(username);
-        if (active && !forceLogin) {
-            return res.status(409).json({
-                success: false,
-                message: '해당 아이디는 현재 로그인 중입니다.',
-                requiresForce: true
-            });
-        }
-
-        // 로그인 허용 및 세션 기록
-        activeLogins.set(username, { lastPing: Date.now() });
-
-        res.status(200).json({
-            success: true,
-            user: {
-                username: userRow.get('username'),
-                grade: userRow.get('grade'),
-                본부: userRow.get('본부') || '미지정',
-                지사: userRow.get('지사') || '미지정',
-                loginTime: new Date().toISOString(),
-            }
+    const active = activeLogins.get(username);
+    if (active && !forceLogin) {
+        // ✅ 이미 로그인 중이면 강제 로그인 여부 요구
+        return res.status(409).json({
+            success: false,
+            message: '해당 아이디는 현재 로그인 중입니다.',
+            requiresForce: true
         });
-    } catch (error) {
-        console.error('[Backend] 로그인 처리 중 오류:', error);
-        res.status(500).json({ message: '서버 오류 발생' });
     }
+
+    // ✅ forceLogin이면 기존 세션 제거
+    if (active && forceLogin) {
+        activeLogins.delete(username);
+    }
+
+    const expiry = Date.now() + 3600 * 1000; // 1시간 세션
+    activeLogins.set(username, { user, expiry });
+
+    res.json({ success: true, user: { username: user.username, grade: user.grade, 본부: user.본부, 지사: user.지사 }, expiry });
 });
 
-// 🔒 주기적 신호 API
+// ===============================================
+// ✅ 강제 로그아웃 API
+// ===============================================
+app.post('/api/force-logout', (req, res) => {
+    const { username } = req.body;
+    if (activeLogins.has(username)) {
+        activeLogins.delete(username);
+        return res.json({ success: true, message: `${username}의 세션이 강제 종료되었습니다.` });
+    }
+    return res.json({ success: false, message: '해당 사용자가 로그인 중이 아닙니다.' });
+});
+
+// ===============================================
+// ✅ 서버 ping (세션 유지용)
+// ===============================================
 app.post('/api/ping', (req, res) => {
     const { username } = req.body;
     if (activeLogins.has(username)) {
-        activeLogins.set(username, { lastPing: Date.now() });
+        return res.json({ success: true });
     }
-    res.json({ ok: true });
+    return res.status(401).json({ success: false, message: '로그인 필요' });
 });
 
-// 🔒 강제 로그아웃 API
-app.post('/api/force-logout', (req, res) => {
-    const { username } = req.body;
-    activeLogins.delete(username);
-    res.json({ success: true, message: `${username}의 세션이 강제 종료되었습니다.` });
-});
-
-
-// =================================================================
-// Express 앱 설정 및 API 라우트
-// =================================================================
-
-// --- 1. 로그인 API ---
-app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        const sheet = authDoc.sheetsByTitle['users'];
-        const rows = await sheet.getRows();
-        const userRow = rows.find(row => row.get('username') === username);
-
-        if (!userRow) return res.status(404).json({ message: '존재하지 않는 아이디입니다.' });
-        if (userRow.get('password') !== password) return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
-
-        res.status(200).json({
-            success: true,
-            user: {
-                username: userRow.get('username'),
-                grade: userRow.get('grade'),
-                본부: userRow.get('본부') || '미지정',
-                지사: userRow.get('지사') || '미지정',
-                loginTime: new Date().toISOString(),
-            }
-        });
-    } catch (error) {
-        console.error('[Backend] 로그인 처리 중 오류:', error);
-        res.status(500).json({ message: '서버 오류 발생' });
-    }
-});
+app.listen(3000, () => console.log('Server running on port 3000'));
 
 // --- 2. 회원가입 신청 API ---
 app.post('/api/register', async (req, res) => {
