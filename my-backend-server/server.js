@@ -40,9 +40,8 @@ const standardDoc = new GoogleSpreadsheet(STANDARD_SPREADSHEET_ID, serviceAccoun
 // =================================================================
 let patientCache = []; 
 let patientCache2 = []; 
-let cachedContacts = { sonhae: [], saengmyeong: [] }; // 원수사 연락망 캐싱
-let standardCache = []; // standard 전용 데이터 캐시
-
+let cachedContacts = { sonhae: [], saengmyeong: [] }; 
+let standardCache = []; 
 
 async function loadAndCachePatientData(doc, cacheArray) { 
     const cacheName = (cacheArray === patientCache) ? '1차 캐시' : '2차 캐시';
@@ -75,8 +74,6 @@ async function loadAndCachePatientData(doc, cacheArray) {
     }
 }
 
-
-// ✨ 원수사 연락망 캐싱 함수
 async function loadAndCacheContacts() {
     try {
         if (!contactDoc.title) await contactDoc.loadInfo();
@@ -84,9 +81,7 @@ async function loadAndCacheContacts() {
         const rowCount = sheet.rowCount;
         const colCount = sheet.columnCount;
 
-        // 헤더 3행
         await sheet.loadCells({ startRowIndex: 2, endRowIndex: 3, startColumnIndex: 0, endColumnIndex: colCount });
-        // 데이터 4행부터
         await sheet.loadCells({ startRowIndex: 3, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: colCount });
 
         const headers = [];
@@ -109,7 +104,7 @@ async function loadAndCacheContacts() {
         const DIVIDE_ROW_INDEX = 32;
         cachedContacts.sonhae = allContacts.slice(0, DIVIDE_ROW_INDEX - 3);
         cachedContacts.saengmyeong = allContacts.slice(DIVIDE_ROW_INDEX - 3);
-        cachedContacts.lastUpdated = new Date().toISOString(); // ✅ 갱신 시각 기록
+        cachedContacts.lastUpdated = new Date().toISOString(); 
 
         console.log(`[Contacts] 캐싱 완료 (손해: ${cachedContacts.sonhae.length}, 생명: ${cachedContacts.saengmyeong.length})`);
     } catch (err) {
@@ -117,31 +112,22 @@ async function loadAndCacheContacts() {
     }
 }
 
-// ================================================================
-// ➌ standard 시트: "맨 처음 시트"만 읽어서 캐시하는 함수
-// - 다양한 컬럼명이 존재할 수 있으므로 row.toObject()를 사용하여 유연하게 처리
-// - 나이 컬럼은 숫자로 파싱 가능하면 ageNumeric으로 저장, 아니면 null
-// - id는 crypto.randomUUID()로 부여 (원본 행 번호를 사용하려면 row._rowNumber 사용 가능)
-// ================================================================
 async function loadAndCacheStandard() {
     try {
-        // 문서 정보가 로드되지 않았다면 로드
         if (!standardDoc.title) await standardDoc.loadInfo();
-
         if (!standardDoc.sheetsByIndex || standardDoc.sheetsByIndex.length === 0) {
             console.warn('[Standard] 시트가 없습니다.');
             standardCache = [];
             return;
         }
 
-        const sheet = standardDoc.sheetsByIndex[0]; // ✅ 맨 처음 시트만 사용
+        const sheet = standardDoc.sheetsByIndex[0]; 
         console.log(`[Standard] 첫 번째 시트 로딩: "${sheet.title}"`);
 
         const rows = await sheet.getRows();
         const mapped = rows.map(row => {
             const obj = row.toObject();
 
-            // 유연한 필드 추출 (컬럼명이 정확히 일치하지 않아도 최대한 잡아냄)
             const 병명 = obj.병명 ?? obj['병명(한글)'] ?? obj['disease'] ?? obj['name'] ?? '';
             const 성별 = (obj.성별 ?? obj.gender ?? '').toString().trim();
             const 나이Raw = obj.나이 ?? obj.age ?? '';
@@ -157,12 +143,12 @@ async function loadAndCacheStandard() {
             const 심사결과 = obj.심사결과 ?? obj.result1 ?? '';
 
             return {
-                id: crypto.randomUUID(), // 고유 id (원하면 row._rowNumber 사용)
+                id: crypto.randomUUID(),
                 원본행: row._rowNumber,
                 병명,
                 성별,
                 나이Raw: (나이Raw === undefined || 나이Raw === null) ? '' : String(나이Raw).trim(),
-                ageNumeric: 나이Parsed, // 숫자로 파싱 가능하면 숫자, 아니면 null
+                ageNumeric: 나이Parsed,
                 보험회사,
                 상품종류,
                 보장내용,
@@ -179,6 +165,74 @@ async function loadAndCacheStandard() {
     }
 }
 
+// =================================================================
+// Express 앱 설정 및 API 라우트
+// =================================================================
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const frontendDistPath = path.join(__dirname, './dist');
+app.use(express.static(frontendDistPath));
+
+// 🔒 현재 로그인 상태 저장용
+const activeLogins = new Map(); // username -> { lastPing: timestamp }
+
+// --- 1. 로그인 API ---
+app.post('/api/login', async (req, res) => {
+    const { username, password, forceLogin } = req.body;
+    try {
+        const sheet = authDoc.sheetsByTitle['users'];
+        const rows = await sheet.getRows();
+        const userRow = rows.find(row => row.get('username') === username);
+
+        if (!userRow) return res.status(404).json({ message: '존재하지 않는 아이디입니다.' });
+        if (userRow.get('password') !== password) return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
+
+        // 🔒 동시 로그인 체크
+        const active = activeLogins.get(username);
+        if (active && !forceLogin) {
+            return res.status(409).json({
+                success: false,
+                message: '해당 아이디는 현재 로그인 중입니다.',
+                requiresForce: true
+            });
+        }
+
+        // 로그인 허용 및 세션 기록
+        activeLogins.set(username, { lastPing: Date.now() });
+
+        res.status(200).json({
+            success: true,
+            user: {
+                username: userRow.get('username'),
+                grade: userRow.get('grade'),
+                본부: userRow.get('본부') || '미지정',
+                지사: userRow.get('지사') || '미지정',
+                loginTime: new Date().toISOString(),
+            }
+        });
+    } catch (error) {
+        console.error('[Backend] 로그인 처리 중 오류:', error);
+        res.status(500).json({ message: '서버 오류 발생' });
+    }
+});
+
+// 🔒 주기적 신호 API
+app.post('/api/ping', (req, res) => {
+    const { username } = req.body;
+    if (activeLogins.has(username)) {
+        activeLogins.set(username, { lastPing: Date.now() });
+    }
+    res.json({ ok: true });
+});
+
+// 🔒 강제 로그아웃 API
+app.post('/api/force-logout', (req, res) => {
+    const { username } = req.body;
+    activeLogins.delete(username);
+    res.json({ success: true, message: `${username}의 세션이 강제 종료되었습니다.` });
+});
 
 
 // =================================================================
