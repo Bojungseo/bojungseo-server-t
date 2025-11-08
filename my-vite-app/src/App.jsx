@@ -1096,15 +1096,13 @@ function SettingsPage({ onGoToDashboard }) {
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold mb-2">손해보험</h2>
                             {leftUsers.map((user, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-4 bg-gray-100 rounded-lg shadow-sm">
-                                    <span className="font-semibold">{user.name}</span>
-                                    <button
-                                        onClick={() => handleWebsiteRedirect(user.url)}
-                                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                                    >
-                                        웹사이트 방문
-                                    </button>
-                                </div>
+                                <button
+                                    key={idx}
+                                    onClick={() => handleWebsiteRedirect(user.url)}
+                                    className="w-full bg-blue-500 text-white py-3 rounded-md hover:bg-blue-600"
+                                >
+                                    {user.name}
+                                </button>
                             ))}
                         </div>
 
@@ -1112,15 +1110,13 @@ function SettingsPage({ onGoToDashboard }) {
                         <div className="space-y-4">
                             <h2 className="text-xl font-bold mb-2">생명보험</h2>
                             {rightUsers.map((user, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-4 bg-gray-100 rounded-lg shadow-sm">
-                                    <span className="font-semibold">{user.name}</span>
-                                    <button
-                                        onClick={() => handleWebsiteRedirect(user.url)}
-                                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                                    >
-                                        웹사이트 방문
-                                    </button>
-                                </div>
+                                <button
+                                    key={idx}
+                                    onClick={() => handleWebsiteRedirect(user.url)}
+                                    className="w-full bg-green-500 text-white py-3 rounded-md hover:bg-green-600"
+                                >
+                                    {user.name}
+                                </button>
                             ))}
                         </div>
                     </div>
