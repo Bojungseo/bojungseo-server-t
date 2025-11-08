@@ -1395,8 +1395,7 @@ function ExtraMenu3({ onGoToDashboard }) {
             <option value="전체">성별: 전체</option>
             <option value="남성">남성</option>
             <option value="여성">여성</option>
-            <option value="무관">무관</option>
-            <option value="모름">모름</option>
+            <option value="모름">모름 (남+여+모름)</option>
           </select>
 
           <select
