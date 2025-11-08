@@ -1068,16 +1068,36 @@ function MenuPage2({ onGoToDashboard }) {
 
 // --- MenuPage3 (설정 페이지) ---
 function SettingsPage({ onGoToDashboard }) {
+    // 예시: 버튼 클릭 시 이동할 URL
+    const handleWebsiteRedirect = () => {
+        window.location.href = "https://example.com"; // 원하는 웹사이트 주소로 변경
+    };
+
     return (
         <div className="p-8 min-h-screen bg-gray-50">
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold">예정이율 체크</h1>
-                        <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                        <button 
+                            onClick={onGoToDashboard} 
+                            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                        >
                             대시보드로 돌아가기
                         </button>
                     </div>
+
+                    {/* 이름과 버튼 추가 */}
+                    <div className="flex justify-between items-center mt-4 p-4 bg-gray-100 rounded-lg">
+                        <span className="font-semibold">홍길동</span>
+                        <button 
+                            onClick={handleWebsiteRedirect} 
+                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                        >
+                            웹사이트 방문
+                        </button>
+                    </div>
+
                     <div className="mt-4 p-4 bg-gray-100 rounded-lg">
                         <p className="font-semibold">이곳은 설정과 관련된 기능을 구현할 공간입니다.</p>
                         <p>예: 비밀번호 변경, 알림 설정 등</p>
