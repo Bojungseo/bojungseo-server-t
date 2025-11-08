@@ -6,26 +6,16 @@ const BACKEND_URL = '';
 // ===============================================
 // API 통신 함수 모음 (변경 없음)
 // ===============================================
-const apiLogin = async (username, password, forceLogin = false) => {
-  const response = await fetch(`${BACKEND_URL}/api/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, forceLogin }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || '로그인 실패');
-  return data;
-};
-
-
-const apiLogout = async (username) => {
-    await fetch(`${BACKEND_URL}/api/logout`, {
+const apiLogin = async (username, password) => {
+    const response = await fetch(`${BACKEND_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
-    });
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || '로그인 실패');
+      return data;
 };
-
 const apiRegister = async (username, password, 본부, 지사) => {
     const response = await fetch(`${BACKEND_URL}/api/register`, {
         method: 'POST',
@@ -113,110 +103,36 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [showForceModal, setShowForceModal] = useState(false);
-
+  
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-
-        try {
-            const data = await apiLogin(username, password);
-            await onLogin(data.user); // 로그인 성공 시
-        } catch (err) {
-            // 🔹 서버가 forceLoginRequired 정보를 보내면 모달 띄우기
-            if (err.message === '이미 로그인 중인 사용자입니다.') {
-                setShowForceModal(true);
-            } else {
-                setError(err.message); // 다른 에러 메시지는 그대로 표시
-            }
-        }
+      e.preventDefault();
+      setError('');
+      try {
+        await onLogin(username, password);
+      } catch (err) {
+        setError(err.message);
+      }
     };
-
-    // 🔹 강제 로그인 버튼 클릭
-    const handleForceLogin = async () => {
-        try {
-            const data = await apiLogin(username, password, true); // forceLogin=true 전달
-            await onLogin(data.user); // 강제 로그인 성공
-            setShowForceModal(false);
-        } catch (err) {
-            setError(err.message);
-            setShowForceModal(false);
-        }
-    };
-
-    // 🔹 강제 로그인 취소 버튼 클릭
-    const handleCancelForce = () => {
-        setShowForceModal(false);
-        setUsername('');
-        setPassword('');
-    };
-
+  
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <div className="p-8 bg-white rounded-lg shadow-md w-96">
-                <h2 className="text-2xl font-bold mb-6 text-center">로그인</h2>
-                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="아이디"
-                        className="w-full px-3 py-2 border rounded-md mb-4"
-                        required
-                    />
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="비밀번호"
-                        className="w-full px-3 py-2 border rounded-md mb-6"
-                        required
-                    />
-                    <button
-                        type="submit"
-                        className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
-                    >
-                        로그인
-                    </button>
-                </form>
-                <button
-                    onClick={onShowRegisterModal}
-                    className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-colors"
-                >
-                    아이디 신청하기
-                </button>
-
-                {/* 강제 로그인 모달 */}
-                {showForceModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white p-6 rounded-lg shadow-md w-80 text-center">
-                            <p className="mb-4 text-gray-700">
-                                이미 로그인 중인 사용자입니다.<br />
-                                강제 로그인 하시겠습니까?
-                            </p>
-                            <div className="flex justify-around mt-4">
-                                <button
-                                    onClick={handleForceLogin}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                                >
-                                    예
-                                </button>
-                                <button
-                                    onClick={handleCancelForce}
-                                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
-                                >
-                                    아니오
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="p-8 bg-white rounded-lg shadow-md w-96">
+          <h2 className="text-2xl font-bold mb-6 text-center">로그인</h2>
+          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="아이디" className="w-full px-3 py-2 border rounded-md" required />
             </div>
+            <div className="mb-6">
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호" className="w-full px-3 py-2 border rounded-md" required />
+            </div>
+            <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors">로그인</button>
+          </form>
+          <button onClick={onShowRegisterModal} className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-colors">아이디 신청하기</button>
         </div>
+      </div>
     );
 }
-
 
 function RequestIdModal({ onClose, onRegisterSuccess }) {
     const [username, setUsername] = useState('');
