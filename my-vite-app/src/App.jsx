@@ -7,16 +7,16 @@ const BACKEND_URL = '';
 // API 통신 함수 모음 (변경 없음)
 // ===============================================
 const apiLogin = async (username, password, forceLogin = false) => {
-    const response = await fetch(`${BACKEND_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, forceLogin }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || '로그인 실패');
-    return data;
+  const response = await fetch(`${BACKEND_URL}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, forceLogin }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || '로그인 실패');
+  return data;
 };
+
 
 const apiLogout = async (username) => {
     await fetch(`${BACKEND_URL}/api/logout`, {
