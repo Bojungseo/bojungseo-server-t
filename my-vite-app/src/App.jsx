@@ -1081,7 +1081,7 @@ function SettingsPage({ onGoToDashboard }) {
             <div className="w-full">
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold">예정이율 체크</h1>
+                        <h1 className="text-3xl font-bold">각 보험사 예정이율 페이지 이동</h1>
                         <button 
                             onClick={onGoToDashboard} 
                             className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
