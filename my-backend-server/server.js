@@ -238,12 +238,6 @@ app.post('/api/force-logout', (req, res) => {
 // =================================================================
 // Express 앱 설정 및 API 라우트
 // =================================================================
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-const frontendDistPath = path.join(__dirname, './dist');
-app.use(express.static(frontendDistPath));
 
 // --- 1. 로그인 API ---
 app.post('/api/login', async (req, res) => {
