@@ -6,47 +6,16 @@ const BACKEND_URL = '';
 // ===============================================
 // API 통신 함수 모음 (변경 없음)
 // ===============================================
-const apiLogin = async (username, password, forceLogin = false) => {
+const apiLogin = async (username, password) => {
     const response = await fetch(`${BACKEND_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, forceLogin }),
-    });
-
-    const data = await response.json();
-
-    if (response.status === 409 && data.requiresForce) {
-        // ✅ 중복 로그인 시 예/아니오 처리
-        const force = window.confirm('해당 아이디가 이미 사용중입니다. 강제 로그아웃 시키겠습니까?');
-        if (force) {
-            return apiLogin(username, password, true); // ✅ 예 -> 강제 로그인 재호출
-        } else {
-            throw new Error('로그인이 취소되었습니다.'); // ✅ 아니오 -> 로그인 취소
-        }
-    }
-
-    if (!response.ok) throw new Error(data.message || '로그인 실패');
-    return data;
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || '로그인 실패');
+      return data;
 };
-
-// ===============================================
-// ✅ 서버 ping (세션 유지용)
-const apiPing = async (username) => {
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/ping`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username }),
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || '세션 만료');
-        return data;
-    } catch (err) {
-        console.error('Ping 실패:', err);
-        throw err;
-    }
-};
-
 const apiRegister = async (username, password, 본부, 지사) => {
     const response = await fetch(`${BACKEND_URL}/api/register`, {
         method: 'POST',
@@ -231,52 +200,43 @@ function SuccessModal({ onClose }) {
 
 // --- DashboardPage 컴포넌트 (변경 없음) ---
 function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGoToMenuPage2, onGoToSettings, onGoToExtra1, onGoToExtra2, onGoToExtra3, onGoToStandardPage }) {
+    // 남은 시간을 초 단위로 저장하는 상태 (60분 = 3600초)
     const [remainingTime, setRemainingTime] = useState(0);
 
-    // ✅ 남은 시간 계산 및 강제 로그아웃
+    // ✨ 남은 시간 계산 로직
     useEffect(() => {
         const savedItem = localStorage.getItem('loggedInUser');
-        if (!savedItem) { onLogout(); return; }
-        const { expiry, username: savedUsername } = JSON.parse(savedItem);
-
+        if (!savedItem) {
+            onLogout();
+            return;
+        }
+        const { expiry } = JSON.parse(savedItem);
+        
         const updateTimer = () => {
-            const now = Date.now();
-            const timeDiff = expiry - now;
+            const now = new Date().getTime();
+            const timeDiff = expiry - now; // 만료 시간과 현재 시간의 차이 (밀리초)
+            
             if (timeDiff <= 0) {
                 setRemainingTime(0);
-                onLogout();
+                clearInterval(intervalId);
+                onLogout(); // 시간이 만료되면 자동 로그아웃
                 return;
             }
-            setRemainingTime(Math.floor(timeDiff / 1000));
+
+            setRemainingTime(Math.floor(timeDiff / 1000)); // 초 단위로 변환
         };
 
         const intervalId = setInterval(updateTimer, 1000);
-        updateTimer();
+        updateTimer(); // 즉시 한 번 업데이트
 
-        return () => clearInterval(intervalId);
-    }, [onLogout, user.username]);
-
-    // ✅ 서버 ping: 30초마다 세션 확인
-    useEffect(() => {
-        const pingInterval = setInterval(async () => {
-            const savedItem = JSON.parse(localStorage.getItem('loggedInUser'));
-            if (!savedItem) return;
-            try {
-                await apiPing(savedItem.username);
-            } catch (err) {
-                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-                onLogout();
-            }
-        }, 30000); // 30초마다
-
-        return () => clearInterval(pingInterval);
+        return () => clearInterval(intervalId); // 컴포넌트 언마운트 시 타이머 정리
     }, [onLogout]);
 
     const formatTime = (totalSeconds) => {
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
-        return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
     
     // 사용자 정보 섹션을 컴팩트한 세로 배열로 렌더링하는 컴포넌트
@@ -1508,9 +1468,8 @@ function App() {
   const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState('login');
   const [isLoading, setIsLoading] = useState(true);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); 
 
-  // 1️⃣ 초기 로컬스토리지 세션 체크
   useEffect(() => {
     const savedUserItem = localStorage.getItem('loggedInUser');
     if (savedUserItem) {
@@ -1526,43 +1485,19 @@ function App() {
     setIsLoading(false);
   }, []);
 
-  // 2️⃣ 주기적 ping 보내기 (서버 세션 유지)
-  useEffect(() => {
-    if (!user) return;
-
-    const interval = setInterval(() => {
-      fetch('/api/ping', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: user.username })
-      }).catch(err => console.error('Ping error:', err));
-    }, 5 * 60 * 1000); // 5분마다 ping
-
-    return () => clearInterval(interval);
-  }, [user]);
-
-  // 3️⃣ 로그인 함수
-  const handleLogin = async (username, password, setUser) => {
+  const handleLogin = async (username, password) => {
     const data = await apiLogin(username, password);
-    localStorage.setItem('loggedInUser', JSON.stringify({ username: data.user.username, expiry: data.expiry }));
+    const now = new Date();
+    const item = {
+      user: data.user,
+      expiry: now.getTime() + (60 * 60 * 1000), // 1 hour
+    };
+    localStorage.setItem('loggedInUser', JSON.stringify(item));
     setUser(data.user);
+    setCurrentPage('dashboard');
   };
 
-
-  // 4️⃣ 로그아웃 함수
-  const handleLogout = async () => {
-    if (user) {
-      try {
-        // 서버 세션 제거
-        await fetch('/api/force-logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: user.username })
-        });
-      } catch (err) {
-        console.error('Logout error:', err);
-      }
-    }
+  const handleLogout = () => {
     localStorage.removeItem('loggedInUser');
     setUser(null);
     setCurrentPage('login');
