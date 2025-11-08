@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { users } from "./PageData"; // src/PageData.js에서 불러오기
 
 // 백엔드 서버의 주소입니다.
 const BACKEND_URL = '';
@@ -1068,9 +1069,8 @@ function MenuPage2({ onGoToDashboard }) {
 
 // --- MenuPage3 (설정 페이지) ---
 function SettingsPage({ onGoToDashboard }) {
-    // 예시: 버튼 클릭 시 이동할 URL
-    const handleWebsiteRedirect = () => {
-        window.location.href = "https://example.com"; // 원하는 웹사이트 주소로 변경
+    const handleWebsiteRedirect = (url) => {
+        window.open(url, "_blank", "noopener,noreferrer");
     };
 
     return (
@@ -1087,26 +1087,31 @@ function SettingsPage({ onGoToDashboard }) {
                         </button>
                     </div>
 
-                    {/* 이름과 버튼 추가 */}
-                    <div className="flex justify-between items-center mt-4 p-4 bg-gray-100 rounded-lg">
-                        <span className="font-semibold">홍길동</span>
-                        <button 
-                            onClick={handleWebsiteRedirect} 
-                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                        >
-                            웹사이트 방문
-                        </button>
+                    {/* 2열 그리드로 여러 항목 표시 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        {users.map((user, index) => (
+                            <div key={index} className="flex justify-between items-center p-4 bg-gray-100 rounded-lg shadow-sm">
+                                <span className="font-semibold">{user.name}</span>
+                                <button
+                                    onClick={() => handleWebsiteRedirect(user.url)}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                >
+                                    웹사이트 방문
+                                </button>
+                            </div>
+                        ))}
                     </div>
 
-                    <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-                        <p className="font-semibold">이곳은 설정과 관련된 기능을 구현할 공간입니다.</p>
-                        <p>예: 비밀번호 변경, 알림 설정 등</p>
+                    <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+                        <p className="font-semibold">비교설명서에 필요한 각보험사 예정이율 사이트 바로가기 입니다.</p>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
+
 
 // --- MenuPage4 (추가 메뉴 1) ---
 function ExtraMenu1({ onGoToDashboard }) {
