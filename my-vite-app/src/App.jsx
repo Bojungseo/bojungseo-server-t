@@ -1090,34 +1090,38 @@ function SettingsPage({ onGoToDashboard }) {
                         </button>
                     </div>
 
-                    {/* 좌우 두 열 */}
+                    {/* 좌우 열 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                         {/* 좌측 */}
-                        <div className="space-y-4">
+                        <div>
                             <h2 className="text-xl font-bold mb-2">손해보험</h2>
-                            {leftUsers.map((user, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => handleWebsiteRedirect(user.url)}
-                                    className="w-full bg-blue-500 text-white py-3 rounded-md hover:bg-blue-600"
-                                >
-                                    {user.name}
-                                </button>
-                            ))}
+                            <div className="grid grid-cols-4 gap-2">
+                                {leftUsers.map((user, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleWebsiteRedirect(user.url)}
+                                        className="bg-blue-500 text-white py-3 rounded-md hover:bg-blue-600"
+                                    >
+                                        {user.name}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* 우측 */}
-                        <div className="space-y-4">
+                        <div>
                             <h2 className="text-xl font-bold mb-2">생명보험</h2>
-                            {rightUsers.map((user, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => handleWebsiteRedirect(user.url)}
-                                    className="w-full bg-green-500 text-white py-3 rounded-md hover:bg-green-600"
-                                >
-                                    {user.name}
-                                </button>
-                            ))}
+                            <div className="grid grid-cols-4 gap-2">
+                                {rightUsers.map((user, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleWebsiteRedirect(user.url)}
+                                        className="bg-green-500 text-white py-3 rounded-md hover:bg-green-600"
+                                    >
+                                        {user.name}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
