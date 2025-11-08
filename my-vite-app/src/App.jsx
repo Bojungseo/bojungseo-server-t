@@ -1300,13 +1300,27 @@ function ExtraMenu3({ onGoToDashboard }) {
       );
     }
 
-    // 성별 필터
+    // ✅ 성별 필터
     if (selectedGender !== "전체") {
       temp = temp.filter((row) => {
-        if (!row.성별) return false;
-        return row.성별 === selectedGender;
+        const gender = row.성별?.trim();
+    
+        // 남성 선택 시 → 남성만
+        if (selectedGender === "남성") return gender === "남성";
+        
+        // 여성 선택 시 → 여성만
+        if (selectedGender === "여성") return gender === "여성";
+        
+        // 모름 선택 시 → 남성 + 여성 + 모름
+        if (selectedGender === "모름") {
+          return ["남성", "여성", "모름"].includes(gender);
+        }
+        
+        // 나머지는 모두 포함 (혹시 future 확장용)
+        return true;
       });
     }
+
 
     // 연령 필터
     if (selectedAgeGroup !== "전체") {
