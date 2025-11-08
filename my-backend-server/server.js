@@ -43,6 +43,9 @@ let patientCache2 = [];
 let cachedContacts = { sonhae: [], saengmyeong: [] }; // 원수사 연락망 캐싱
 let standardCache = []; // standard 전용 데이터 캐시
 
+// --- 로그인 상태 관리 ---
+let loggedInUsers = {}; 
+// 구조: { username: { loginTime: timestamp, sessionId: uuid } }
 
 async function loadAndCachePatientData(doc, cacheArray) { 
     const cacheName = (cacheArray === patientCache) ? '1차 캐시' : '2차 캐시';
@@ -193,7 +196,8 @@ app.use(express.static(frontendDistPath));
 
 // --- 1. 로그인 API ---
 app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, forceLogin } = req.body;
+
     try {
         const sheet = authDoc.sheetsByTitle['users'];
         const rows = await sheet.getRows();
@@ -201,6 +205,21 @@ app.post('/api/login', async (req, res) => {
 
         if (!userRow) return res.status(404).json({ message: '존재하지 않는 아이디입니다.' });
         if (userRow.get('password') !== password) return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
+
+        const currentLogin = loggedInUsers[username];
+        if (currentLogin && !forceLogin) {
+            return res.status(409).json({ 
+                message: '이미 로그인 중인 사용자입니다.', 
+                forceLoginRequired: true 
+            });
+        }
+
+        if (currentLogin && forceLogin) {
+            delete loggedInUsers[username];
+        }
+
+        const sessionId = crypto.randomUUID();
+        loggedInUsers[username] = { loginTime: Date.now(), sessionId };
 
         res.status(200).json({
             success: true,
@@ -210,13 +229,22 @@ app.post('/api/login', async (req, res) => {
                 본부: userRow.get('본부') || '미지정',
                 지사: userRow.get('지사') || '미지정',
                 loginTime: new Date().toISOString(),
+                sessionId,
             }
         });
+
     } catch (error) {
         console.error('[Backend] 로그인 처리 중 오류:', error);
         res.status(500).json({ message: '서버 오류 발생' });
     }
 });
+
+app.post('/api/logout', (req, res) => {
+    const { username } = req.body;
+    if (loggedInUsers[username]) delete loggedInUsers[username];
+    res.status(200).json({ success: true });
+});
+
 
 // --- 2. 회원가입 신청 API ---
 app.post('/api/register', async (req, res) => {
