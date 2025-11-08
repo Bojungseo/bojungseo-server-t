@@ -1474,8 +1474,9 @@ function App() {
   const [user, setUser] = useState(null);
   const [currentPage, setCurrentPage] = useState('login');
   const [isLoading, setIsLoading] = useState(true);
-  const [showSuccessModal, setShowSuccessModal] = useState(false); 
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // 1️⃣ 초기 로컬스토리지 세션 체크
   useEffect(() => {
     const savedUserItem = localStorage.getItem('loggedInUser');
     if (savedUserItem) {
@@ -1491,57 +1492,87 @@ function App() {
     setIsLoading(false);
   }, []);
 
+  // 2️⃣ 주기적 ping 보내기 (서버 세션 유지)
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      fetch('/api/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user.username })
+      }).catch(err => console.error('Ping error:', err));
+    }, 5 * 60 * 1000); // 5분마다 ping
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // 3️⃣ 로그인 함수
   const handleLogin = async (username, password, forceLogin = false) => {
-  try {
-    // 1️⃣ 로그인 요청
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, forceLogin })
-    });
+    try {
+      // 기존 로그인 상태 초기화 (클라이언트)
+      localStorage.removeItem('loggedInUser');
 
-    const data = await res.json();
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, forceLogin })
+      });
 
-    if (!res.ok) {
-      // 2️⃣ 중복 로그인 체크
-      if (res.status === 409 && data.requiresForce) {
-        const confirmForce = window.confirm(
-          '이미 로그인 중인 계정입니다. 기존 세션을 종료하고 로그인하시겠습니까?'
-        );
-        if (confirmForce) {
-          // 3️⃣ 강제 로그아웃 호출
-          await fetch('/api/force-logout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-          });
-          // 4️⃣ 강제 로그인 재시도
-          return handleLogin(username, password, true);
+      const data = await res.json();
+
+      if (!res.ok) {
+        // 중복 로그인 체크
+        if (res.status === 409 && data.requiresForce) {
+          const confirmForce = window.confirm(
+            '이미 로그인 중인 계정입니다. 기존 세션을 종료하고 로그인하시겠습니까?'
+          );
+          if (confirmForce) {
+            // 강제 로그아웃 호출
+            await fetch('/api/force-logout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username })
+            });
+            // 강제 로그인 재시도
+            return handleLogin(username, password, true);
+          } else {
+            throw new Error('로그인 취소됨');
+          }
         } else {
-          throw new Error('로그인 취소됨');
+          throw new Error(data.message || '로그인 실패');
         }
-      } else {
-        throw new Error(data.message || '로그인 실패');
+      }
+
+      // 정상 로그인 처리
+      const now = new Date();
+      const item = {
+        user: data.user,
+        expiry: now.getTime() + 60 * 60 * 1000, // 1시간
+      };
+      localStorage.setItem('loggedInUser', JSON.stringify(item));
+      setUser(data.user);
+      setCurrentPage('dashboard');
+
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // 4️⃣ 로그아웃 함수
+  const handleLogout = async () => {
+    if (user) {
+      try {
+        // 서버 세션 제거
+        await fetch('/api/force-logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user.username })
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
       }
     }
-
-    // 5️⃣ 정상 로그인 처리
-    const now = new Date();
-    const item = {
-      user: data.user,
-      expiry: now.getTime() + 60 * 60 * 1000, // 1시간
-    };
-    localStorage.setItem('loggedInUser', JSON.stringify(item));
-    setUser(data.user);
-    setCurrentPage('dashboard');
-
-  } catch (err) {
-    alert(err.message);
-  }
-};
-
-
-  const handleLogout = () => {
     localStorage.removeItem('loggedInUser');
     setUser(null);
     setCurrentPage('login');
