@@ -1491,17 +1491,55 @@ function App() {
     setIsLoading(false);
   }, []);
 
-  const handleLogin = async (username, password) => {
-    const data = await apiLogin(username, password);
+  const handleLogin = async (username, password, forceLogin = false) => {
+  try {
+    // 1️⃣ 로그인 요청
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, forceLogin })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      // 2️⃣ 중복 로그인 체크
+      if (res.status === 409 && data.requiresForce) {
+        const confirmForce = window.confirm(
+          '이미 로그인 중인 계정입니다. 기존 세션을 종료하고 로그인하시겠습니까?'
+        );
+        if (confirmForce) {
+          // 3️⃣ 강제 로그아웃 호출
+          await fetch('/api/force-logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+          });
+          // 4️⃣ 강제 로그인 재시도
+          return handleLogin(username, password, true);
+        } else {
+          throw new Error('로그인 취소됨');
+        }
+      } else {
+        throw new Error(data.message || '로그인 실패');
+      }
+    }
+
+    // 5️⃣ 정상 로그인 처리
     const now = new Date();
     const item = {
       user: data.user,
-      expiry: now.getTime() + (60 * 60 * 1000), // 1 hour
+      expiry: now.getTime() + 60 * 60 * 1000, // 1시간
     };
     localStorage.setItem('loggedInUser', JSON.stringify(item));
     setUser(data.user);
     setCurrentPage('dashboard');
-  };
+
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
 
   const handleLogout = () => {
     localStorage.removeItem('loggedInUser');
