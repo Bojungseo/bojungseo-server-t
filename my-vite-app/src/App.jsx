@@ -210,7 +210,14 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
             onLogout();
             return;
         }
-        const { expiry } = JSON.parse(savedItem);
+        const { expiry, username: savedUsername } = JSON.parse(savedItem);
+
+        // 중복 로그인 감지
+        if (user.username !== savedUsername) {
+            alert('다른 위치에서 동일 계정이 로그인되어 세션이 종료됩니다.');
+            onLogout();
+            return;
+        }
         
         const updateTimer = () => {
             const now = new Date().getTime();
@@ -218,7 +225,6 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
             
             if (timeDiff <= 0) {
                 setRemainingTime(0);
-                clearInterval(intervalId);
                 onLogout(); // 시간이 만료되면 자동 로그아웃
                 return;
             }
@@ -230,7 +236,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
         updateTimer(); // 즉시 한 번 업데이트
 
         return () => clearInterval(intervalId); // 컴포넌트 언마운트 시 타이머 정리
-    }, [onLogout]);
+    }, [onLogout, user.username]);
 
     const formatTime = (totalSeconds) => {
         const hours = Math.floor(totalSeconds / 3600);
