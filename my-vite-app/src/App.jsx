@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { users } from "./PageData"; // src/PageData.js에서 불러오기
-import CalendarDashboard from './components/CalendarDashboard'; // 캘린더 컴포넌트 import
-
 
 // 백엔드 서버의 주소입니다.
 const BACKEND_URL = '';
@@ -137,8 +135,6 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
     );
 }
 
-
-
 function RequestIdModal({ onClose, onRegisterSuccess }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -202,171 +198,170 @@ function SuccessModal({ onClose }) {
     );
 }
 
-// --- DashboardPage 컴포넌트 (캘린더 포함) ---
-function DashboardPage({
-  user,
-  onLogout,
-  onGoToAdminPanel,
-  onGoToMenuPage1,
-  onGoToMenuPage2,
-  onGoToSettings,
-  onGoToExtra1,
-  onGoToExtra2,
-  onGoToExtra3,
-  onGoToStandardPage
-}) {
-  const [remainingTime, setRemainingTime] = useState(0);
 
-  // ✨ 남은 시간 계산 로직
-  useEffect(() => {
-    const savedItem = localStorage.getItem('loggedInUser');
-    if (!savedItem) {
-      onLogout();
-      return;
-    }
-    const { expiry } = JSON.parse(savedItem);
+// --- DashboardPage 컴포넌트 (변경 없음) ---
+function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGoToMenuPage2, onGoToSettings, onGoToExtra1, onGoToExtra2, onGoToExtra3, onGoToStandardPage }) {
+    // 남은 시간을 초 단위로 저장하는 상태 (60분 = 3600초)
+    const [remainingTime, setRemainingTime] = useState(0);
 
-    const updateTimer = () => {
-      const now = new Date().getTime();
-      const timeDiff = expiry - now;
-      if (timeDiff <= 0) {
-        setRemainingTime(0);
-        clearInterval(intervalId);
-        onLogout();
-        return;
-      }
-      setRemainingTime(Math.floor(timeDiff / 1000));
+    // ✨ 남은 시간 계산 로직
+    useEffect(() => {
+        const savedItem = localStorage.getItem('loggedInUser');
+        if (!savedItem) {
+            onLogout();
+            return;
+        }
+        const { expiry } = JSON.parse(savedItem);
+        
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const timeDiff = expiry - now; // 만료 시간과 현재 시간의 차이 (밀리초)
+            
+            if (timeDiff <= 0) {
+                setRemainingTime(0);
+                clearInterval(intervalId);
+                onLogout(); // 시간이 만료되면 자동 로그아웃
+                return;
+            }
+
+            setRemainingTime(Math.floor(timeDiff / 1000)); // 초 단위로 변환
+        };
+
+        const intervalId = setInterval(updateTimer, 1000);
+        updateTimer(); // 즉시 한 번 업데이트
+
+        return () => clearInterval(intervalId); // 컴포넌트 언마운트 시 타이머 정리
+    }, [onLogout]);
+
+    const formatTime = (totalSeconds) => {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+    
+    // 사용자 정보 섹션을 컴팩트한 세로 배열로 렌더링하는 컴포넌트
+    const UserInfoCard = () => (
+        <div className="bg-white p-4 rounded-lg shadow-md w-full">
+            <h2 className="text-xl font-bold mb-3 border-b pb-2">사용자 정보</h2>
+            <div className="flex flex-col space-y-3">
+                <div className="p-1 border-b border-gray-100">
+                    <p className="text-xs text-gray-500">아이디</p>
+                    <p className="font-semibold text-base text-blue-600">{user.username}</p>
+                </div>
+                <div className="p-1 border-b border-gray-100">
+                    <p className="text-xs text-gray-500">본부</p>
+                    <p className="text-base font-semibold text-indigo-600">{user.본부 || '미지정'}</p>
+                </div>
+                <div className="p-1 border-b border-gray-100">
+                    <p className="text-xs text-gray-500">지사</p>
+                    <p className="text-base font-semibold text-green-600">{user.지사 || '미지정'}</p>
+                </div>
+                <div className="p-1">
+                    <p className="text-xs text-gray-500">남은 시간</p>
+                    <p className="text-base font-semibold text-yellow-600">{formatTime(remainingTime)}</p>
+                </div>
+            </div>
+        </div>
+    );
+    
+    // 바로가기 버튼들을 한 줄로 표시하는 컴포넌트 (가로 배치)
+    const QuickLinksRow = () => {
+        const isManager = user.grade === '최고 관리자';
+        const isRegular2 = user.grade === '일반 회원2'; // 새 조건
+
+        const allButtons = [
+            { label: '예외질환 검색(유병자)', onClick: onGoToMenuPage1 },
+            { label: '예외질환 검색(건강고지)', onClick: onGoToMenuPage2 },
+            { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
+            { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
+            { label: '원수사 연락망', onClick: onGoToExtra2, managerOnly: true },
+            { label: '심사데이터 검색', onClick: onGoToExtra3, managerOnly: true },
+        ];
+
+        return (
+            <div className="bg-white p-4 rounded-lg shadow-md h-full">
+                <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700">바로가기</h2>
+                <div className="flex flex-wrap gap-2">
+                    {allButtons.map((button, index) => {
+                        if (button.managerOnly && !(isManager || isRegular2)) return null;
+                        
+                        return (
+                            <button 
+                                key={index} 
+                                onClick={button.onClick} 
+                                className="text-left p-3 bg-gray-100 hover:bg-blue-100 rounded-md transition-colors text-sm"
+                            >
+                                {button.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        );
     };
 
-    const intervalId = setInterval(updateTimer, 1000);
-    updateTimer();
-
-    return () => clearInterval(intervalId);
-  }, [onLogout]);
-
-  const formatTime = (totalSeconds) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
-
-  const UserInfoCard = () => (
-    <div className="bg-white p-4 rounded-lg shadow-md w-full">
-      <h2 className="text-xl font-bold mb-3 border-b pb-2">사용자 정보</h2>
-      <div className="flex flex-col space-y-3">
-        <div className="p-1 border-b border-gray-100">
-          <p className="text-xs text-gray-500">아이디</p>
-          <p className="font-semibold text-base text-blue-600">{user.username}</p>
-        </div>
-        <div className="p-1 border-b border-gray-100">
-          <p className="text-xs text-gray-500">본부</p>
-          <p className="text-base font-semibold text-indigo-600">{user.본부 || '미지정'}</p>
-        </div>
-        <div className="p-1 border-b border-gray-100">
-          <p className="text-xs text-gray-500">지사</p>
-          <p className="text-base font-semibold text-green-600">{user.지사 || '미지정'}</p>
-        </div>
-        <div className="p-1">
-          <p className="text-xs text-gray-500">남은 시간</p>
-          <p className="text-base font-semibold text-yellow-600">{formatTime(remainingTime)}</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  const QuickLinksRow = () => {
-    const isManager = user.grade === '최고 관리자';
-    const isRegular2 = user.grade === '일반 회원2';
-    const allButtons = [
-      { label: '예외질환 검색(유병자)', onClick: onGoToMenuPage1 },
-      { label: '예외질환 검색(건강고지)', onClick: onGoToMenuPage2 },
-      { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
-      { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
-      { label: '원수사 연락망', onClick: onGoToExtra2, managerOnly: true },
-      { label: '심사데이터 검색', onClick: onGoToExtra3, managerOnly: true },
-    ];
-
-    return (
-      <div className="bg-white p-4 rounded-lg shadow-md h-full">
-        <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700">바로가기</h2>
-        <div className="flex flex-wrap gap-2">
-          {allButtons.map((button, index) => {
-            if (button.managerOnly && !(isManager || isRegular2)) return null;
-            return (
-              <button
-                key={index}
-                onClick={button.onClick}
-                className="text-left p-3 bg-gray-100 hover:bg-blue-100 rounded-md transition-colors text-sm"
-              >
-                {button.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-gray-50 font-Tenada">
       <div className="w-full">
         {/* --- 상단 헤더 --- */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">설계사 업무지원</h1>
-            <button onClick={onLogout} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">로그아웃</button>
-          </div>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">설계사 업무지원</h1>
+                <button onClick={onLogout} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">로그아웃</button>
+            </div>
         </div>
-
+        
         {/* ✨ 상단 정보 구역: 사용자 정보 (1열) + 바로가기 (4열) */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
-          <div className="lg:col-span-1"><UserInfoCard />
-            {user.grade === '최고 관리자' && (
-              <div className="mt-4">
-                <button onClick={onGoToAdminPanel} className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105">
-                  🛠 관리자패널
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="lg:col-span-4"><QuickLinksRow /></div>
+            
+            {/* --- 좌측: 사용자 정보 (1열 차지) --- */}
+            <div className="lg:col-span-1">
+                <UserInfoCard />
+                
+                {/* 2. 관리자 버튼 (사용자 정보 카드 아래에 배치) */}
+                {user.grade === '최고 관리자' && (
+                    <div className="mt-4">
+                        <button onClick={onGoToAdminPanel} className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105">
+                            🛠 관리자패널 
+                        </button>
+                    </div>
+                )}
+            </div>
+            
+            {/* --- 우측: 바로가기 (4열 차지, 가로 배치) --- */}
+            <div className="lg:col-span-4">
+                <QuickLinksRow />
+            </div>
         </div>
-
-        {/* --- 메인 컨텐츠 영역: 게시판 + 캘린더 --- */}
+        
+        {/* --- ✨ 메인 컨텐츠 영역: 게시판을 좌우 두 개로 분리 --- */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* --- 게시판 1 --- */}
-          <div className="bg-white p-6 rounded-lg shadow-md h-full">
-            <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
-            <ul className="space-y-2">
-              <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">필독! 11월 시스템 정기 점검 안내</li>
-              <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">신규 기능 '조건 검색' 사용 가이드</li>
-              <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">관리자 패널 사용 변경사항 공지</li>
-            </ul>
-          </div>
+            {/* --- 게시판 1 --- */}
+            <div className="bg-white p-6 rounded-lg shadow-md h-full">
+                <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
+                <ul className="space-y-2">
+                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">필독! 11월 시스템 정기 점검 안내</li>
+                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">신규 기능 '조건 검색' 사용 가이드</li>
+                    <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">관리자 패널 사용 변경사항 공지</li>
+                </ul>
+            </div>
 
-          {/* --- 게시판 2 --- */}
-          <div className="bg-white p-6 rounded-lg shadow-md h-full">
-            <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
-            <ul className="space-y-2">
-              <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
-              <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">우직하게하면 뭐든 평균은 할 수 있다.</li>
-              <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">일단해라, 그냥해라, 노력해라</li>
-            </ul>
-          </div>
+            {/* --- 게시판 2 --- */}
+            <div className="bg-white p-6 rounded-lg shadow-md h-full">
+                <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
+                <ul className="space-y-2">
+                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
+                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">우직하게하면 뭐든 평균은 할 수 있다.</li>
+                    <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">일단해라, 그냥해라, 노력해라</li>
+                </ul>
+            </div>
         </div>
-
-        {/* --- 캘린더 영역 추가 --- */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">일정 캘린더</h2>
-          <CalendarDashboard username={user.username} />
-        </div>
-
       </div>
     </div>
   );
 }
-
 
 // --- AdminPanelPage (변경 없음) ---
 function AdminPanelPage({ onGoToDashboard }) {
