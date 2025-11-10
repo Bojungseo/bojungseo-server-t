@@ -254,6 +254,80 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// ----------------------------
+// 1. 일정 추가
+// ----------------------------
+app.post('/api/schedules', async (req, res) => {
+    const { username, title, description, date } = req.body;
+
+    if (!username || !title || !date) {
+        return res.status(400).json({ message: 'username, title, date는 필수입니다.' });
+    }
+
+    try {
+        const schedule = new Schedule({ username, title, description, date });
+        await schedule.save();
+        res.status(201).json({ success: true, schedule });
+    } catch (err) {
+        console.error('일정 추가 오류:', err);
+        res.status(500).json({ success: false, message: '일정 추가 중 오류 발생' });
+    }
+});
+
+// ----------------------------
+// 2. 특정 사용자 일정 조회
+// ----------------------------
+app.get('/api/schedules/:username', async (req, res) => {
+    const { username } = req.params;
+    try {
+        const schedules = await Schedule.find({ username }).sort({ date: 1 });
+        res.status(200).json({ success: true, schedules });
+    } catch (err) {
+        console.error('일정 조회 오류:', err);
+        res.status(500).json({ success: false, message: '일정 조회 중 오류 발생' });
+    }
+});
+
+// ----------------------------
+// 3. 일정 수정
+// ----------------------------
+app.put('/api/schedules/:id', async (req, res) => {
+    const { id } = req.params;
+    const { title, description, date } = req.body;
+
+    try {
+        const schedule = await Schedule.findById(id);
+        if (!schedule) return res.status(404).json({ message: '일정을 찾을 수 없습니다.' });
+
+        if (title) schedule.title = title;
+        if (description) schedule.description = description;
+        if (date) schedule.date = date;
+
+        await schedule.save();
+        res.status(200).json({ success: true, schedule });
+    } catch (err) {
+        console.error('일정 수정 오류:', err);
+        res.status(500).json({ success: false, message: '일정 수정 중 오류 발생' });
+    }
+});
+
+// ----------------------------
+// 4. 일정 삭제
+// ----------------------------
+app.delete('/api/schedules/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await Schedule.findByIdAndDelete(id);
+        if (!result) return res.status(404).json({ message: '일정을 찾을 수 없습니다.' });
+
+        res.status(200).json({ success: true, message: '일정이 삭제되었습니다.' });
+    } catch (err) {
+        console.error('일정 삭제 오류:', err);
+        res.status(500).json({ success: false, message: '일정 삭제 중 오류 발생' });
+    }
+});
+
+
 // --- 3. (관리자) 신청 목록 조회 API ---
 app.get('/api/requests', async (req, res) => {
     try {
@@ -431,7 +505,6 @@ app.get('/api/search-standard', async (req, res) => {
         res.status(500).json({ success: false, message: '표준 시트 검색 중 오류가 발생했습니다.' });
     }
 });
-
 
 
 // ✅ 모든 API 라우트 이후에 위치해야 함
