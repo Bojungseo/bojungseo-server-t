@@ -1,32 +1,40 @@
 FROM node:20
 
+# -------------------------------
+# 1. 전체 작업 디렉토리 설정
+# -------------------------------
 WORKDIR /app
 
 # -------------------------------
-# 1. 백엔드 의존성 설치
+# 2. 백엔드 의존성 설치
 # -------------------------------
 COPY my-backend-server/package*.json ./my-backend-server/
-RUN cd my-backend-server && npm install
+WORKDIR /app/my-backend-server
+RUN npm ci
 
 COPY my-backend-server/ ./my-backend-server/
 
 # -------------------------------
-# 2. 프론트엔드 의존성 설치 및 빌드
+# 3. 프론트엔드 의존성 설치 및 빌드
 # -------------------------------
-COPY my-vite-app/package*.json ./my-vite-app/
-RUN cd my-vite-app && npm install
+WORKDIR /app/my-vite-app
+COPY my-vite-app/package*.json ./
+RUN npm ci
 
-COPY my-vite-app/ ./my-vite-app/
-RUN cd my-vite-app && npm run build
+# react-calendar가 dependencies에 없으면 여기서 설치
+RUN npm install react-calendar
 
-# -------------------------------
-# 3. 빌드 결과 백엔드로 복사
-# -------------------------------
-RUN mkdir -p ./my-backend-server/dist
-RUN cp -r my-vite-app/dist/* ./my-backend-server/dist/
+COPY my-vite-app/ ./
+RUN npm run build
 
 # -------------------------------
-# 4. 환경 설정 및 서버 실행
+# 4. 빌드 결과를 백엔드 dist로 복사
+# -------------------------------
+RUN mkdir -p /app/my-backend-server/dist
+RUN cp -r /app/my-vite-app/dist/* /app/my-backend-server/dist/
+
+# -------------------------------
+# 5. 환경 설정 및 서버 실행
 # -------------------------------
 WORKDIR /app/my-backend-server
 ENV PORT=4000
