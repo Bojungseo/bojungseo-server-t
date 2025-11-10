@@ -1,44 +1,44 @@
+# ===============================
+# 1️⃣ Node.js 20 이미지 사용
+# ===============================
 FROM node:20
 
-# -------------------------------
-# 1. 전체 작업 디렉토리 설정
-# -------------------------------
+# ===============================
+# 2️⃣ 작업 디렉토리 설정
+# ===============================
 WORKDIR /app
 
-# -------------------------------
-# 2. 백엔드 의존성 설치
-# -------------------------------
-COPY my-backend-server/package*.json ./my-backend-server/
-WORKDIR /app/my-backend-server
-RUN npm ci
+# ===============================
+# 3️⃣ 백엔드 의존성 설치
+# ===============================
+COPY my-backend-server/package.json ./my-backend-server/
+RUN cd my-backend-server && npm install
 
+# ===============================
+# 4️⃣ 백엔드 코드 복사
+# ===============================
 COPY my-backend-server/ ./my-backend-server/
 
-# -------------------------------
-# 3. 프론트엔드 의존성 설치 및 빌드
-# -------------------------------
-WORKDIR /app/my-vite-app
-COPY my-vite-app/package*.json ./
-RUN npm ci
+# ===============================
+# 5️⃣ 프론트엔드 의존성 설치 및 빌드
+# ===============================
+COPY my-vite-app/ ./my-vite-app/
+RUN cd my-vite-app && npm install && npm run build
 
-# react-calendar가 dependencies에 없으면 여기서 설치
-RUN npm install react-calendar
+# ===============================
+# 6️⃣ 프론트엔드 빌드 결과를 백엔드에 복사
+# ===============================
+RUN mkdir -p ./my-backend-server/dist
+RUN cp -r my-vite-app/dist/* ./my-backend-server/dist/
 
-COPY my-vite-app/ ./
-RUN npm run build
-
-# -------------------------------
-# 4. 빌드 결과를 백엔드 dist로 복사
-# -------------------------------
-RUN mkdir -p /app/my-backend-server/dist
-RUN cp -r /app/my-vite-app/dist/* /app/my-backend-server/dist/
-
-# -------------------------------
-# 5. 환경 설정 및 서버 실행
-# -------------------------------
+# ===============================
+# 7️⃣ 환경 설정
+# ===============================
 WORKDIR /app/my-backend-server
 ENV PORT=4000
-ENV NODE_ENV=production
 EXPOSE 4000
 
+# ===============================
+# 8️⃣ 서버 실행
+# ===============================
 CMD ["node", "server.js"]
