@@ -10,6 +10,11 @@ const fs = require('fs');
 const crypto = require('crypto'); 
 const path = require('path'); 
 
+
+// --- 캘린더 DB 주소 맵핑 ---
+const mongoose = require('mongoose');
+require('dotenv').config(); // .env 읽기
+
 // --- 설정 ---
 const PORT = process.env.PORT || 4000;
 const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON || '{}');
