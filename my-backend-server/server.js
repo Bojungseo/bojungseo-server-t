@@ -10,29 +10,6 @@ const fs = require('fs');
 const crypto = require('crypto'); 
 const path = require('path'); 
 
-
-// --- 캘린더 DB 주소 맵핑 ---
-const mongoose = require('mongoose');
-require('dotenv').config(); // .env 읽기
-
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('✅ 캘린더DB 연결 성공'))
-.catch(err => console.error('❌ 캘린더DB 연결 실패:', err));
-
-// --- 일정 스키마 정의 ---
-const scheduleSchema = new mongoose.Schema({
-    username: { type: String, required: true }, // 로그인한 사용자
-    title: { type: String, required: true },    // 일정 제목
-    description: { type: String },             // 내용
-    date: { type: Date, required: true }       // 일정 날짜
-}, { timestamps: true }); // 생성/수정 시간 자동 기록
-
-// Schedule 모델 생성
-const Schedule = mongoose.model('Schedule', scheduleSchema);
-
 // --- 설정 ---
 const PORT = process.env.PORT || 4000;
 const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON || '{}');
@@ -254,43 +231,6 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// --- 일정 조회 ---
-app.get('/api/schedules', async (req, res) => {
-    const { username } = req.query;
-    try {
-        const schedules = await Schedule.find({ username });
-        res.status(200).json({ schedules });
-    } catch (err) {
-        res.status(500).json({ message: '일정 조회 실패' });
-    }
-});
-
-// --- 일정 추가 ---
-app.post('/api/schedules', async (req, res) => {
-    const { username, title, date } = req.body;
-    try {
-        const newSchedule = new Schedule({ username, title, date });
-        await newSchedule.save();
-        res.status(201).json({ message: '일정 추가 완료' });
-    } catch (err) {
-        res.status(500).json({ message: '일정 추가 실패' });
-    }
-});
-
-// --- 일정 수정 ---
-app.put('/api/schedules/:id', async (req, res) => {
-    const { id } = req.params;
-    const { title } = req.body;
-    try {
-        await Schedule.findByIdAndUpdate(id, { title });
-        res.status(200).json({ message: '일정 수정 완료' });
-    } catch (err) {
-        res.status(500).json({ message: '일정 수정 실패' });
-    }
-});
-
-
-
 // --- 3. (관리자) 신청 목록 조회 API ---
 app.get('/api/requests', async (req, res) => {
     try {
@@ -468,6 +408,7 @@ app.get('/api/search-standard', async (req, res) => {
         res.status(500).json({ success: false, message: '표준 시트 검색 중 오류가 발생했습니다.' });
     }
 });
+
 
 
 // ✅ 모든 API 라우트 이후에 위치해야 함
