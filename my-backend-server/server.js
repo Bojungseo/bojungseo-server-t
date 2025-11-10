@@ -15,6 +15,24 @@ const path = require('path');
 const mongoose = require('mongoose');
 require('dotenv').config(); // .env 읽기
 
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('✅ 캘린더DB 연결 성공'))
+.catch(err => console.error('❌ 캘린더DB 연결 실패:', err));
+
+// --- 일정 스키마 정의 ---
+const scheduleSchema = new mongoose.Schema({
+    username: { type: String, required: true }, // 로그인한 사용자
+    title: { type: String, required: true },    // 일정 제목
+    description: { type: String },             // 내용
+    date: { type: Date, required: true }       // 일정 날짜
+}, { timestamps: true }); // 생성/수정 시간 자동 기록
+
+// Schedule 모델 생성
+const Schedule = mongoose.model('Schedule', scheduleSchema);
+
 // --- 설정 ---
 const PORT = process.env.PORT || 4000;
 const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON || '{}');
