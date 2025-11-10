@@ -1,120 +1,134 @@
-import React, { useEffect, useState } from "react";
-import { Calendar, momentLocalizer } from "react-big-calendar";
-import moment from "moment";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+// 파일 위치: my-vite-app/src/components/CalendarDashboard.jsx
 
-const localizer = momentLocalizer(moment);
+import React, { useState, useEffect } from 'react';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import axios from 'axios';
+
+const BACKEND_URL = ''; // 배포 시 서버 주소 넣기
 
 function CalendarDashboard({ username }) {
-  const [events, setEvents] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [schedules, setSchedules] = useState([]);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [editingId, setEditingId] = useState(null);
 
-  // 서버에서 일정 불러오기
-  const fetchEvents = async () => {
+  // 선택한 날짜의 일정 가져오기
+  const fetchSchedules = async (date) => {
     try {
-      const res = await fetch(`/api/schedules?username=${username}`);
-      const data = await res.json();
-      setEvents(
-        data.schedules.map((item) => ({
-          id: item._id,
-          title: item.title,
-          start: new Date(item.date),
-          end: new Date(item.date),
-          description: item.description,
-        }))
-      );
+      const res = await axios.get(`${BACKEND_URL}/api/schedules`, {
+        params: { username, date: date.toISOString() }
+      });
+      setSchedules(res.data);
     } catch (err) {
-      console.error("일정 불러오기 실패:", err);
+      console.error('일정 조회 실패:', err);
     }
   };
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    fetchSchedules(selectedDate);
+  }, [selectedDate]);
 
-  // 날짜 클릭
-  const handleSelect = (slotInfo) => {
-    const existing = events.find(
-      (ev) => moment(ev.start).format("YYYY-MM-DD") === moment(slotInfo.start).format("YYYY-MM-DD")
-    );
-    if (existing) {
-      setTitle(existing.title);
-      setDescription(existing.description || "");
-      setSelectedDate(existing.start);
-    } else {
-      setTitle("");
-      setDescription("");
-      setSelectedDate(slotInfo.start);
+  const handleDateClick = (date) => {
+    setSelectedDate(date);
+    setTitle('');
+    setDescription('');
+    setEditingId(null);
+  };
+
+  const handleSave = async () => {
+    try {
+      if (editingId) {
+        // 수정
+        await axios.put(`${BACKEND_URL}/api/schedules/${editingId}`, {
+          title,
+          description
+        });
+      } else {
+        // 새 일정 추가
+        await axios.post(`${BACKEND_URL}/api/schedules`, {
+          username,
+          title,
+          description,
+          date: selectedDate
+        });
+      }
+      fetchSchedules(selectedDate);
+      setTitle('');
+      setDescription('');
+      setEditingId(null);
+    } catch (err) {
+      console.error('일정 저장 실패:', err);
     }
   };
 
-  // 일정 저장
-  const handleSave = async () => {
-    if (!title || !selectedDate) return alert("제목과 날짜를 입력해주세요.");
+  const handleEdit = (schedule) => {
+    setEditingId(schedule._id);
+    setTitle(schedule.title);
+    setDescription(schedule.description);
+  };
 
-    const existing = events.find(
-      (ev) => moment(ev.start).format("YYYY-MM-DD") === moment(selectedDate).format("YYYY-MM-DD")
-    );
-
-    const url = existing ? `/api/schedules/${existing.id}` : "/api/schedules";
-    const method = existing ? "PUT" : "POST";
-
+  const handleDelete = async (id) => {
+    if (!window.confirm('정말 삭제하시겠습니까?')) return;
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, title, description, date: selectedDate }),
-      });
-      if (res.ok) {
-        fetchEvents();
-        setTitle("");
-        setDescription("");
-        setSelectedDate(null);
-      }
+      await axios.delete(`${BACKEND_URL}/api/schedules/${id}`);
+      fetchSchedules(selectedDate);
     } catch (err) {
-      console.error("저장 실패:", err);
+      console.error('일정 삭제 실패:', err);
     }
   };
 
   return (
-    <div className="mt-6">
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-4">캘린더</h2>
       <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: 500 }}
-        selectable
-        onSelectSlot={handleSelect}
-        onSelectEvent={(event) => handleSelect({ start: event.start })}
+        value={selectedDate}
+        onChange={handleDateClick}
       />
 
-      {selectedDate && (
-        <div className="mt-4 p-4 border rounded bg-white shadow">
-          <h3 className="font-semibold mb-2">일정 추가/수정: {moment(selectedDate).format("YYYY-MM-DD")}</h3>
+      <div className="mt-4">
+        <h3 className="text-lg font-semibold mb-2">
+          {selectedDate.toLocaleDateString()} 일정
+        </h3>
+
+        {schedules.length > 0 ? (
+          <ul className="mb-4">
+            {schedules.map((sch) => (
+              <li key={sch._id} className="flex justify-between items-center mb-2 p-2 border rounded">
+                <span>
+                  <strong>{sch.title}</strong>: {sch.description}
+                </span>
+                <div>
+                  <button onClick={() => handleEdit(sch)} className="mr-2 px-2 py-1 bg-yellow-400 rounded text-white">수정</button>
+                  <button onClick={() => handleDelete(sch._id)} className="px-2 py-1 bg-red-500 rounded text-white">삭제</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mb-4 text-gray-500">해당 날짜 일정이 없습니다.</p>
+        )}
+
+        <div className="mb-4">
           <input
             type="text"
             placeholder="제목"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="border px-2 py-1 w-full mb-2"
+            className="w-full mb-2 p-2 border rounded"
           />
           <textarea
             placeholder="내용"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="border px-2 py-1 w-full mb-2"
+            className="w-full mb-2 p-2 border rounded"
           />
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            저장
+          <button onClick={handleSave} className="px-4 py-2 bg-blue-500 text-white rounded">
+            {editingId ? '수정 저장' : '추가'}
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
