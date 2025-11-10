@@ -202,20 +202,6 @@ function SuccessModal({ onClose }) {
     );
 }
 
-// ===============================================
-// App.jsx 메인 컴포넌트
-// ===============================================
-
-function App() {
-  const [user, setUser] = useState(null);
-
-  const handleLogout = () => setUser(null);
-
-  if (!user) return <LoginPage onLogin={setUser} />;
-
-  return <DashboardPage user={user} onLogout={handleLogout} />;
-}
-
 // --- DashboardPage 컴포넌트 (캘린더 포함) ---
 function DashboardPage({
   user,
