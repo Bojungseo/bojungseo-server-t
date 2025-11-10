@@ -465,7 +465,7 @@ function AdminPanelPage({ onGoToDashboard }) {
         <div className="w-full bg-white p-6 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold">👑 관리자 패널</h1>
-                <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">대시보드로 돌아가기</button>
+                <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">홈으로 가기</button>
             </div>
   
             {loading && <p className="text-center">데이터를 불러오는 중입니다...</p>}
@@ -675,7 +675,7 @@ function MenuPage1({ onGoToDashboard }) {
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold">예외질환 검색(유병자)</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                            대시보드로 돌아가기
+                            홈으로 가기
                         </button>
                     </div>
 
@@ -935,7 +935,7 @@ function MenuPage2({ onGoToDashboard }) {
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold">예외질환 검색(건강고지)</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                            대시보드로 돌아가기
+                            홈으로 가기
                         </button>
                     </div>
 
@@ -1088,7 +1088,7 @@ function SettingsPage({ onGoToDashboard }) {
                             onClick={onGoToDashboard} 
                             className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
                         >
-                            대시보드로 돌아가기
+                            홈으로 가기
                         </button>
                     </div>
 
@@ -1143,7 +1143,7 @@ function ExtraMenu1({ onGoToDashboard }) {
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold">화재보험산정</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                            대시보드로 돌아가기
+                            홈으로 가기
                         </button>
                     </div>
                     <div className="mt-4 p-4 bg-gray-100 rounded-lg">
@@ -1197,7 +1197,7 @@ function ContactPage({ onGoToDashboard }) {
                     onClick={onGoToDashboard}
                     className="ml-3 px-3 py-1 bg-blue-500 text-white rounded"
                 >
-                    대시보드로 돌아가기
+                    홈으로 가기
                 </button>
             </div>
         );
@@ -1212,7 +1212,7 @@ function ContactPage({ onGoToDashboard }) {
                     onClick={onGoToDashboard}
                     className="mt-3 px-3 py-1 bg-blue-500 text-white rounded"
                 >
-                    대시보드로 돌아가기
+                    홈으로 가기
                 </button>
             </div>
         );
@@ -1230,7 +1230,7 @@ function ContactPage({ onGoToDashboard }) {
                     onClick={onGoToDashboard}
                     className="px-3 py-1 bg-blue-500 text-white rounded"
                 >
-                    대시보드로 돌아가기
+                    홈으로 가기
                 </button>
             </div>
 
@@ -1404,7 +1404,7 @@ function ExtraMenu3({ onGoToDashboard }) {
             onClick={onGoToDashboard}
             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
           >
-            대시보드로 돌아가기
+            홈으로 가기
           </button>
         </div>
 
