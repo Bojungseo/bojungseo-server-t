@@ -1,4 +1,4 @@
-
+import './App.css';          // CSS 임포트
 import React, { useState, useEffect, useCallback } from 'react';
 import { users } from "./PageData"; // src/PageData.js에서 불러오기
 
