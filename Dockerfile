@@ -23,6 +23,7 @@ COPY my-backend-server/ ./my-backend-server/
 # 5️⃣ 프론트엔드 의존성 설치 및 빌드
 # ===============================
 COPY my-vite-app/ ./my-vite-app/
+# ✅ 여기서 package.json에 있는 Material UI 등 모든 의존성 자동 설치
 RUN cd my-vite-app && npm install && npm run build
 
 # ===============================
