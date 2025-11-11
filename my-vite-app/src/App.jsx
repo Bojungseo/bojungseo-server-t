@@ -369,7 +369,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
             <div
                 className="absolute top-0 left-0 w-full h-full -z-10"
                 style={{
-                    backgroundImage: "url('/Dimg.jpg')", // 여기에 이미지 경로
+                    backgroundImage: "url('/Dimg.png')", // 여기에 이미지 경로
                     backgroundSize: 'cover',
                     backgroundPosition: 'center center',
                     backgroundRepeat: 'no-repeat',
