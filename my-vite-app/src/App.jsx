@@ -1,4 +1,6 @@
-import './App.css';          // CSS 임포트
+import './index.css';   // 전역 스타일 + 폰트 적용
+import './App.css';     // App 전용 스타일
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { users } from "./PageData"; // src/PageData.js에서 불러오기
 
