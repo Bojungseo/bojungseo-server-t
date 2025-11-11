@@ -116,21 +116,20 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-end min-h-screen overflow-hidden bg-black">
+    <div className="relative flex items-center justify-center min-h-screen overflow-hidden">
       {/* 🎬 배경 영상 */}
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="absolute top-0 left-0 w-full h-full object-contain"
+        className="absolute inset-0 w-full h-full object-contain"
       >
         <source src="/3logo.mp4" type="video/mp4" />
-        브라우저가 동영상을 지원하지 않습니다.
       </video>
 
-      {/* ✨ 상단 중앙 텍스트 (그대로 유지) */}
-      <div className="absolute top-[10%] w-full text-center z-20 px-4">
+      {/* ✨ 상단 중앙 텍스트 */}
+      <div className="absolute top-[8%] w-full text-center z-20 px-4">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
           설계사 영업지원 툴
         </h1>
@@ -139,51 +138,46 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
         </p>
       </div>
 
-      {/* 🔹 하단 로그인 박스 */}
-      <div className="relative z-10 mb-10 flex flex-row items-end justify-center gap-6">
-        <div className="p-8 bg-white/50 rounded-2xl shadow-2xl w-96 backdrop-blur-md">
-          <h2 className="text-2xl font-bold mb-6 text-center">로그인</h2>
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="사용자"
-                className="w-full px-3 py-2 border rounded-md"
-                required
-              />
-            </div>
-            <div className="mb-6">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호"
-                className="w-full px-3 py-2 border rounded-md"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
-            >
-              로그인
-            </button>
-          </form>
+      {/* 🧩 로그인 박스 (가로 배치 + 반투명도 높임) */}
+      <div className="relative z-20 mt-32 p-6 bg-white bg-opacity-60 rounded-lg shadow-lg backdrop-blur-md">
+        <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">로그인</h2>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
+        <form onSubmit={handleSubmit} className="flex flex-row items-center gap-3">
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="사용자"
+            className="px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="비밀번호"
+            className="px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+            required
+          />
           <button
+            type="submit"
+            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors whitespace-nowrap"
+          >
+            로그인
+          </button>
+          <button
+            type="button"
             onClick={onShowRegisterModal}
-            className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-colors"
+            className="bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors whitespace-nowrap"
           >
             사용자 신청하기
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
 }
-
 
 
 
