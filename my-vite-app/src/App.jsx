@@ -304,7 +304,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
     
     // 사용자 정보 섹션을 컴팩트한 세로 배열로 렌더링하는 컴포넌트
     const UserInfoCard = () => (
-        <div className="bg-white p-4 rounded-lg shadow-md w-full">
+        <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full">
             <h2 className="text-xl font-bold mb-3 border-b pb-2">사용자 정보</h2>
             <div className="flex flex-col space-y-3">
                 <div className="p-1 border-b border-gray-100">
@@ -342,7 +342,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
         ];
 
         return (
-            <div className="bg-white p-4 rounded-lg shadow-md h-full">
+            <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md h-full">
                 <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700">바로가기</h2>
                 <div className="flex flex-wrap gap-2">
                     {allButtons.map((button, index) => {
@@ -352,7 +352,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                             <button 
                                 key={index} 
                                 onClick={button.onClick} 
-                                className="text-left p-3 bg-gray-100 hover:bg-blue-100 rounded-md transition-colors text-sm"
+                                className="text-left p-3 bg-gray-100/70 hover:bg-blue-100 rounded-md transition-colors text-sm"
                             >
                                 {button.label}
                             </button>
@@ -363,66 +363,85 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
         );
     };
 
+    return (
+        <div className="relative min-h-screen font-Tenada">
+            {/* 🎨 배경 이미지 */}
+            <div
+                className="absolute top-0 left-0 w-full h-full -z-10"
+                style={{
+                    backgroundImage: "url('/Dimg.jpg')", // 여기에 이미지 경로
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center center',
+                    backgroundRepeat: 'no-repeat',
+                }}
+            ></div>
 
-  return (
-    <div className="p-4 md:p-8 min-h-screen bg-gray-50 font-Tenada">
-      <div className="w-full">
-        {/* --- 상단 헤더 --- */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">설계사 업무지원</h1>
-                <button onClick={onLogout} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">로그아웃</button>
-            </div>
-        </div>
-        
-        {/* ✨ 상단 정보 구역: 사용자 정보 (1열) + 바로가기 (4열) */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
-            
-            {/* --- 좌측: 사용자 정보 (1열 차지) --- */}
-            <div className="lg:col-span-1">
-                <UserInfoCard />
-                
-                {/* 2. 관리자 버튼 (사용자 정보 카드 아래에 배치) */}
-                {user.grade === '최고 관리자' && (
-                    <div className="mt-4">
-                        <button onClick={onGoToAdminPanel} className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105">
-                            🛠 관리자패널 
-                        </button>
+            <div className="p-4 md:p-8 min-h-screen">
+                <div className="w-full">
+                    {/* --- 상단 헤더 --- */}
+                    <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md mb-8">
+                        <div className="flex justify-between items-center">
+                            <h1 className="text-3xl font-bold">설계사 업무지원</h1>
+                            <button
+                                onClick={onLogout}
+                                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                            >
+                                로그아웃
+                            </button>
+                        </div>
                     </div>
-                )}
-            </div>
-            
-            {/* --- 우측: 바로가기 (4열 차지, 가로 배치) --- */}
-            <div className="lg:col-span-4">
-                <QuickLinksRow />
-            </div>
-        </div>
-        
-        {/* --- ✨ 메인 컨텐츠 영역: 게시판을 좌우 두 개로 분리 --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* --- 게시판 1 --- */}
-            <div className="bg-white p-6 rounded-lg shadow-md h-full">
-                <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
-                <ul className="space-y-2">
-                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">필독! 11월 시스템 정기 점검 안내</li>
-                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">신규 기능 '조건 검색' 사용 가이드</li>
-                    <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">관리자 패널 사용 변경사항 공지</li>
-                </ul>
-            </div>
 
-            {/* --- 게시판 2 --- */}
-            <div className="bg-white p-6 rounded-lg shadow-md h-full">
-                <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
-                <ul className="space-y-2">
-                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
-                    <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">우직하게하면 뭐든 평균은 할 수 있다.</li>
-                    <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">일단해라, 그냥해라, 노력해라</li>
-                </ul>
+                    {/* ✨ 상단 정보 구역: 사용자 정보 (1열) + 바로가기 (4열) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
+                        {/* --- 좌측: 사용자 정보 (1열 차지) --- */}
+                        <div className="lg:col-span-1">
+                            <UserInfoCard />
+
+                            {/* 2. 관리자 버튼 (사용자 정보 카드 아래에 배치) */}
+                            {user.grade === '최고 관리자' && (
+                                <div className="mt-4 bg-white/50 backdrop-blur-md p-2 rounded-lg shadow-md">
+                                    <button
+                                        onClick={onGoToAdminPanel}
+                                        className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105"
+                                    >
+                                        🛠 관리자패널 
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* --- 우측: 바로가기 (4열 차지, 가로 배치) --- */}
+                        <div className="lg:col-span-4">
+                            <QuickLinksRow />
+                        </div>
+                    </div>
+
+                    {/* --- ✨ 메인 컨텐츠 영역: 게시판을 좌우 두 개로 분리 --- */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* --- 게시판 1 --- */}
+                        <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md h-full">
+                            <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
+                            <ul className="space-y-2">
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">필독! 11월 시스템 정기 점검 안내</li>
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">신규 기능 '조건 검색' 사용 가이드</li>
+                                <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">관리자 패널 사용 변경사항 공지</li>
+                            </ul>
+                        </div>
+
+                        {/* --- 게시판 2 --- */}
+                        <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md h-full">
+                            <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
+                            <ul className="space-y-2">
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">우직하게하면 뭐든 평균은 할 수 있다.</li>
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">일단해라, 그냥해라, 노력해라</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 // --- AdminPanelPage (변경 없음) ---
