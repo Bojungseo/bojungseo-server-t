@@ -101,39 +101,79 @@ const apiSearchPatients2 = async (params) => {
 // ===============================================
 
 function LoginPage({ onLogin, onShowRegisterModal }) {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-  
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      setError('');
-      try {
-        await onLogin(username, password);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-  
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="p-8 bg-white rounded-lg shadow-md w-96">
-          <h2 className="text-2xl font-bold mb-6 text-center">로그인</h2>
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="아이디" className="w-full px-3 py-2 border rounded-md" required />
-            </div>
-            <div className="mb-6">
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호" className="w-full px-3 py-2 border rounded-md" required />
-            </div>
-            <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors">로그인</button>
-          </form>
-          <button onClick={onShowRegisterModal} className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-colors">아이디 신청하기</button>
-        </div>
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      await onLogin(username, password);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="relative flex items-center justify-center min-h-screen w-full overflow-hidden">
+      {/* MP4 배경 */}
+      <video
+        autoPlay
+        loop
+        muted
+        className="absolute top-0 left-0 w-full h-full object-contain"
+      >
+        <source src="/3logo.mp4" type="video/mp4" />
+        브라우저가 video 태그를 지원하지 않습니다.
+      </video>
+
+      {/* 로그인 박스 */}
+      <div className="relative p-8 bg-white bg-opacity-90 rounded-lg shadow-md w-96 z-10">
+        <h2 className="text-2xl font-bold mb-6 text-center">설계사 영업지원</h2>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="사용자"
+              className="w-full px-3 py-2 border rounded-md"
+              required
+            />
+          </div>
+          <div className="mb-6">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="비밀번호"
+              className="w-full px-3 py-2 border rounded-md"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
+          >
+            로그인
+          </button>
+        </form>
+        <button
+          onClick={onShowRegisterModal}
+          className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-colors"
+        >
+          사용자 신청하기
+        </button>
       </div>
-    );
+    </div>
+  );
 }
+
+
+
+
 
 function RequestIdModal({ onClose, onRegisterSuccess }) {
     const [username, setUsername] = useState('');
@@ -158,7 +198,7 @@ function RequestIdModal({ onClose, onRegisterSuccess }) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white p-8 rounded-lg shadow-md w-96">
-          <h2 className="text-2xl font-bold mb-4">아이디 신청</h2>
+          <h2 className="text-2xl font-bold mb-4">사용자 신청</h2>
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
@@ -174,7 +214,7 @@ function RequestIdModal({ onClose, onRegisterSuccess }) {
               <input type="text" value={지사} onChange={(e) => set지사(e.target.value)} placeholder="지사 입력 [예) 메테오지사]" className="w-full px-3 py-2 border rounded-md" required />
             </div>
             <div className="flex justify-between">
-              <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">아이디 신청하기</button>
+              <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">사용자 신청하기</button>
               <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">닫기</button>
             </div>
           </form>
@@ -188,7 +228,7 @@ function SuccessModal({ onClose }) {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
             <div className="bg-white p-10 rounded-xl shadow-2xl w-96 text-center transform transition-all scale-100">
                 <svg className="w-16 h-16 mx-auto text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h2 className="text-2xl font-bold mb-2 text-green-700">아이디 신청 완료!</h2>
+                <h2 className="text-2xl font-bold mb-2 text-green-700">사용자 신청 완료!</h2>
                 <p className="text-gray-600 mb-6">관리자에게 승인을 요청했습니다.</p>
                 <button onClick={onClose} className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors font-semibold">
                     확인
