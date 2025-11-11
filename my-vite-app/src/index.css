@@ -1,10 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+/* 폰트 적용 */
 @font-face {
-  font-family: 'Tenada';
-  src: url('/Tenada.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+    font-family: 'Tenada';
+    src: url('./fonts/Tenada-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* 전체 body에 폰트 적용 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Tenada', sans-serif;
+    background-color: #f5f5f5;
 }
