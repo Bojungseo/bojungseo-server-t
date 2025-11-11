@@ -1,5 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { users } from "./PageData"; // src/PageData.js에서 불러오기
+import { users as dummyUsers } from "./PageData";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Paper,
+  Stack
+} from '@mui/material';
 
 // 백엔드 서버의 주소입니다.
 const BACKEND_URL = '';
@@ -108,535 +122,277 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    try {
-      await onLogin(username, password);
-    } catch (err) {
-      setError(err.message);
-    }
+    try { await onLogin(username, password); } 
+    catch (err) { setError(err.message); }
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      {/* 🎥 배경 영상 */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute top-0 left-0 w-full h-full object-contain"
-      >
-        <source src="/3logo.mp4" type="video/mp4" />
-        브라우저가 video 태그를 지원하지 않습니다.
-      </video>
-
-      {/* ✨ 상단 중앙 텍스트 (그대로 유지) */}
-      <div className="absolute top-[10%] w-full text-center z-20 px-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundImage: 'url(/3logo.mp4)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        p: 2
+      }}
+    >
+      <Paper elevation={12} sx={{ p: 4, borderRadius: 3, width: { xs: '90%', sm: 400 }, backdropFilter: 'blur(10px)' }}>
+        <Typography variant="h4" align="center" gutterBottom>
           설계사 영업지원 툴
-        </h1>
-        <p className="text-base sm:text-lg md:text-xl text-gray-100 mt-3 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
-          효율적인 영업을 위한 통합 관리 플랫폼
-        </p>
-      </div>
-
-      {/* 🔒 로그인 박스 (우측 중앙) */}
-      <div className="absolute right-[5%] top-1/2 -translate-y-1/2 z-20">
-        <div
-          className="p-8 rounded-2xl shadow-2xl w-80 sm:w-96 backdrop-blur-md transition-all"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0)', // ✅ 완전 투명 (0 ~ 1 사이 값으로 조절 가능)
-          }}
-        >
-          <h2 className="text-2xl font-bold mb-6 text-center text-gray-800"></h2>
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="사용자"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-                required
-              />
-            </div>
-            <div className="mb-6">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all"
-            >
-              로그인
-            </button>
-          </form>
-
-          <button
-            onClick={onShowRegisterModal}
-            className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-all"
-          >
-            사용자 신청하기
-          </button>
-        </div>
-      </div>
-    </div>
+        </Typography>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <TextField
+          label="사용자"
+          variant="outlined"
+          fullWidth
+          margin="dense"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <TextField
+          label="비밀번호"
+          variant="outlined"
+          fullWidth
+          margin="dense"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }} onClick={handleSubmit}>
+          로그인
+        </Button>
+        <Button variant="outlined" fullWidth sx={{ mt: 1 }} onClick={onShowRegisterModal}>
+          사용자 신청하기
+        </Button>
+      </Paper>
+    </Box>
   );
 }
 
 
 
 
-
+// ===============================================
+// MUI 기반 RequestIdModal
+// ===============================================
 function RequestIdModal({ onClose, onRegisterSuccess }) {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [본부, set본부] = useState(''); 
-    const [지사, set지사] = useState(''); 
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-  
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      setMessage('');
-      setError('');
-      try {
-        await apiRegister(username, password, 본부, 지사); 
-        onRegisterSuccess(); 
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-  
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg shadow-md w-96">
-          <h2 className="text-2xl font-bold mb-4">사용자 신청</h2>
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="신청자 이름" className="w-full px-3 py-2 border rounded-md" required />
-            </div>
-            <div className="mb-4">
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="사용할 비밀번호" className="w-full px-3 py-2 border rounded-md" required />
-            </div>
-            <div className="mb-4">
-              <input type="text" value={본부} onChange={(e) => set본부(e.target.value)} placeholder="본부 입력 [예) 320본부]" className="w-full px-3 py-2 border rounded-md" required />
-            </div>
-            <div className="mb-6">
-              <input type="text" value={지사} onChange={(e) => set지사(e.target.value)} placeholder="지사 입력 [예) 메테오지사]" className="w-full px-3 py-2 border rounded-md" required />
-            </div>
-            <div className="flex justify-between">
-              <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">사용자 신청하기</button>
-              <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">닫기</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [본부, set본부] = useState('');
+  const [지사, set지사] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      await apiRegister(username, password, 본부, 지사);
+      onRegisterSuccess();
+    } catch (err) { setError(err.message); }
+  };
+
+  return (
+    <Dialog open onClose={onClose}>
+      <DialogTitle>사용자 신청</DialogTitle>
+      <DialogContent>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        <TextField label="신청자 이름" fullWidth margin="dense" value={username} onChange={e => setUsername(e.target.value)} required />
+        <TextField label="비밀번호" type="password" fullWidth margin="dense" value={password} onChange={e => setPassword(e.target.value)} required />
+        <TextField label="본부" fullWidth margin="dense" value={본부} onChange={e => set본부(e.target.value)} required />
+        <TextField label="지사" fullWidth margin="dense" value={지사} onChange={e => set지사(e.target.value)} required />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>닫기</Button>
+        <Button onClick={handleSubmit} variant="contained">신청하기</Button>
+      </DialogActions>
+    </Dialog>
+  );
 }
 
+
+
+// ===============================================
+// MUI 기반 SuccessModal
+// ===============================================
 function SuccessModal({ onClose }) {
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-            <div className="bg-white p-10 rounded-xl shadow-2xl w-96 text-center transform transition-all scale-100">
-                <svg className="w-16 h-16 mx-auto text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h2 className="text-2xl font-bold mb-2 text-green-700">사용자 신청 완료!</h2>
-                <p className="text-gray-600 mb-6">관리자에게 승인을 요청했습니다.</p>
-                <button onClick={onClose} className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors font-semibold">
-                    확인
-                </button>
-            </div>
-        </div>
-    );
+  return (
+    <Dialog open onClose={onClose}>
+      <DialogTitle>사용자 신청 완료!</DialogTitle>
+      <DialogContent>
+        <Typography>관리자에게 승인을 요청했습니다.</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant="contained">확인</Button>
+      </DialogActions>
+    </Dialog>
+  );
 }
+
 
 
 // --- DashboardPage 컴포넌트 (변경 없음) ---
-function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGoToMenuPage2, onGoToSettings, onGoToExtra1, onGoToExtra2, onGoToExtra3, onGoToStandardPage }) {
-    // 남은 시간을 초 단위로 저장하는 상태 (60분 = 3600초)
-    const [remainingTime, setRemainingTime] = useState(0);
+function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGoToMenuPage2, onGoToSettings, onGoToExtra1, onGoToExtra2, onGoToExtra3 }) {
+  const [remainingTime, setRemainingTime] = useState(0);
 
-    // ✨ 남은 시간 계산 로직
-    useEffect(() => {
-        const savedItem = localStorage.getItem('loggedInUser');
-        if (!savedItem) {
-            onLogout();
-            return;
-        }
-        const { expiry } = JSON.parse(savedItem);
-        
-        const updateTimer = () => {
-            const now = new Date().getTime();
-            const timeDiff = expiry - now; // 만료 시간과 현재 시간의 차이 (밀리초)
-            
-            if (timeDiff <= 0) {
-                setRemainingTime(0);
-                clearInterval(intervalId);
-                onLogout(); // 시간이 만료되면 자동 로그아웃
-                return;
-            }
+  useEffect(() => {
+    const savedItem = localStorage.getItem('loggedInUser');
+    if (!savedItem) { onLogout(); return; }
+    const { expiry } = JSON.parse(savedItem);
 
-            setRemainingTime(Math.floor(timeDiff / 1000)); // 초 단위로 변환
-        };
+    const intervalId = setInterval(() => {
+      const diff = expiry - new Date().getTime();
+      if (diff <= 0) { setRemainingTime(0); clearInterval(intervalId); onLogout(); return; }
+      setRemainingTime(Math.floor(diff / 1000));
+    }, 1000);
 
-        const intervalId = setInterval(updateTimer, 1000);
-        updateTimer(); // 즉시 한 번 업데이트
+    return () => clearInterval(intervalId);
+  }, [onLogout]);
 
-        return () => clearInterval(intervalId); // 컴포넌트 언마운트 시 타이머 정리
-    }, [onLogout]);
+  const formatTime = (sec) => {
+    const h = Math.floor(sec / 3600); const m = Math.floor((sec % 3600) / 60); const s = sec % 60;
+    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  };
 
-    const formatTime = (totalSeconds) => {
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    };
-    
-    // 사용자 정보 섹션을 컴팩트한 세로 배열로 렌더링하는 컴포넌트
-    const UserInfoCard = () => (
-        <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full">
-            <h2 className="text-xl font-bold mb-3 border-b pb-2">사용자 정보</h2>
-            <div className="flex flex-col space-y-3">
-                <div className="p-1 border-b border-gray-100">
-                    <p className="text-xs text-gray-500">아이디</p>
-                    <p className="font-semibold text-base text-blue-600">{user.username}</p>
-                </div>
-                <div className="p-1 border-b border-gray-100">
-                    <p className="text-xs text-gray-500">본부</p>
-                    <p className="text-base font-semibold text-indigo-600">{user.본부 || '미지정'}</p>
-                </div>
-                <div className="p-1 border-b border-gray-100">
-                    <p className="text-xs text-gray-500">지사</p>
-                    <p className="text-base font-semibold text-green-600">{user.지사 || '미지정'}</p>
-                </div>
-                <div className="p-1">
-                    <p className="text-xs text-gray-500">남은 시간</p>
-                    <p className="text-base font-semibold text-yellow-600">{formatTime(remainingTime)}</p>
-                </div>
-            </div>
-        </div>
-    );
-    
-    // 바로가기 버튼들을 한 줄로 표시하는 컴포넌트 (가로 배치)
-    const QuickLinksRow = () => {
-        const isManager = user.grade === '최고 관리자';
-        const isRegular2 = user.grade === '일반 회원2'; // 새 조건
+  return (
+    <Box sx={{ minHeight: '100vh', p: 3, backgroundColor: '#f5f5f5' }}>
+      {/* 상단 헤더 */}
+      <Paper sx={{ p: 2, mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4">설계사 업무지원</Typography>
+        <Button onClick={onLogout} color="error" variant="contained">로그아웃</Button>
+      </Paper>
 
-        const allButtons = [
-            { label: '예외질환 검색(유병자)', onClick: onGoToMenuPage1 },
-            { label: '예외질환 검색(건강고지)', onClick: onGoToMenuPage2 },
-            { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
-            { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
-            { label: '원수사 연락망', onClick: onGoToExtra2, managerOnly: true },
-            { label: '심사데이터 검색', onClick: onGoToExtra3, managerOnly: true },
-        ];
+      {/* 사용자 정보 + 바로가기 */}
+      <Grid container spacing={3} mb={4}>
+        <Grid item xs={12} md={3}>
+          <Paper sx={{ p:2 }}>
+            <Typography variant="h6" gutterBottom>사용자 정보</Typography>
+            <Typography>아이디: {user.username}</Typography>
+            <Typography>본부: {user.본부 || '미지정'}</Typography>
+            <Typography>지사: {user.지사 || '미지정'}</Typography>
+            <Typography>남은 시간: {formatTime(remainingTime)}</Typography>
+          </Paper>
+          {user.grade === '최고 관리자' && (
+            <Button onClick={onGoToAdminPanel} variant="contained" color="secondary" fullWidth sx={{ mt:2 }}>
+              🛠 관리자패널
+            </Button>
+          )}
+        </Grid>
 
-        return (
-            <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md h-full">
-                <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700">바로가기</h2>
-                <div className="flex flex-wrap gap-2">
-                    {allButtons.map((button, index) => {
-                        if (button.managerOnly && !(isManager || isRegular2)) return null;
-                        
-                        return (
-                            <button 
-                                key={index} 
-                                onClick={button.onClick} 
-                                className="text-left p-3 bg-gray-100/70 hover:bg-blue-100 rounded-md transition-colors text-sm"
-                            >
-                                {button.label}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    };
+        <Grid item xs={12} md={9}>
+          <Paper sx={{ p:2 }}>
+            <Typography variant="h6" gutterBottom>바로가기</Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Button variant="outlined" onClick={onGoToMenuPage1}>예외질환 검색(유병자)</Button>
+              <Button variant="outlined" onClick={onGoToMenuPage2}>예외질환 검색(건강고지)</Button>
+              {user.grade === '최고 관리자' && <>
+                <Button variant="outlined" onClick={onGoToSettings}>예정이율 체크</Button>
+                <Button variant="outlined" onClick={onGoToExtra1}>화재보험산정</Button>
+                <Button variant="outlined" onClick={onGoToExtra2}>원수사 연락망</Button>
+                <Button variant="outlined" onClick={onGoToExtra3}>심사데이터 검색</Button>
+              </>}
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
 
-    return (
-        <div className="relative min-h-screen font-Tenada">
-            {/* 🎨 배경 이미지 */}
-            <div
-                className="absolute top-0 left-0 w-full h-full -z-10"
-                style={{
-                    backgroundImage: "url('/Dimg.png')", // 여기에 이미지 경로
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center center',
-                    backgroundRepeat: 'no-repeat',
-                }}
-            ></div>
-
-            <div className="p-4 md:p-8 min-h-screen">
-                <div className="w-full">
-                    {/* --- 상단 헤더 --- */}
-                    <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md mb-8">
-                        <div className="flex justify-between items-center">
-                            <h1 className="text-3xl font-bold">설계사 업무지원</h1>
-                            <button
-                                onClick={onLogout}
-                                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-                            >
-                                로그아웃
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* ✨ 상단 정보 구역: 사용자 정보 (1열) + 바로가기 (4열) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
-                        {/* --- 좌측: 사용자 정보 (1열 차지) --- */}
-                        <div className="lg:col-span-1">
-                            <UserInfoCard />
-
-                            {/* 2. 관리자 버튼 (사용자 정보 카드 아래에 배치) */}
-                            {user.grade === '최고 관리자' && (
-                                <div className="mt-4 bg-white/50 backdrop-blur-md p-2 rounded-lg shadow-md">
-                                    <button
-                                        onClick={onGoToAdminPanel}
-                                        className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105"
-                                    >
-                                        🛠 관리자패널 
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* --- 우측: 바로가기 (4열 차지, 가로 배치) --- */}
-                        <div className="lg:col-span-4">
-                            <QuickLinksRow />
-                        </div>
-                    </div>
-
-                    {/* --- ✨ 메인 컨텐츠 영역: 게시판을 좌우 두 개로 분리 --- */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* --- 게시판 1 --- */}
-                        <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md h-full">
-                            <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
-                            <ul className="space-y-2">
-                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">필독! 11월 시스템 정기 점검 안내</li>
-                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">신규 기능 '조건 검색' 사용 가이드</li>
-                                <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">관리자 패널 사용 변경사항 공지</li>
-                            </ul>
-                        </div>
-
-                        {/* --- 게시판 2 --- */}
-                        <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md h-full">
-                            <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
-                            <ul className="space-y-2">
-                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
-                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">우직하게하면 뭐든 평균은 할 수 있다.</li>
-                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">일단해라, 그냥해라, 노력해라</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+      {/* 게시판 예시 */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p:2 }}>
+            <Typography variant="h6" gutterBottom>공지사항</Typography>
+            <ul>
+              <li>필독! 11월 시스템 정기 점검 안내</li>
+              <li>신규 기능 '조건 검색' 사용 가이드</li>
+              <li>관리자 패널 사용 변경사항 공지</li>
+            </ul>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p:2 }}>
+            <Typography variant="h6" gutterBottom>게시판기능 추가예정</Typography>
+            <ul>
+              <li>못하는게 아니라 안하는거다.</li>
+              <li>우직하게하면 뭐든 평균은 할 수 있다.</li>
+              <li>일단해라, 그냥해라, 노력해라</li>
+            </ul>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 }
 
 // --- AdminPanelPage (변경 없음) ---
 function AdminPanelPage({ onGoToDashboard }) {
-    const [requests, setRequests] = useState([]);
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [editingUser, setEditingUser] = useState(null); // 현재 수정 중인 사용자의 id와 데이터를 저장
+  const [requests, setRequests] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
 
-    const fetchData = useCallback(async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const [requestsData, usersData] = await Promise.all([
-            apiGetRequests(),
-            apiGetUsers()
-        ]);
-        setRequests(requestsData);
-        setUsers(usersData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }, []);
-  
-    useEffect(() => {
-      fetchData();
-    }, [fetchData]);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true); setError('');
+      const [reqs, usrs] = await Promise.all([apiGetRequests(), apiGetUsers()]);
+      setRequests(reqs); setUsers(usrs);
+    } catch(err){ setError(err.message); }
+    finally { setLoading(false); }
+  }, []);
 
-    const handleApprove = async (requestId) => {
-        if (window.confirm('이 사용자의 아이디 신청을 승인하시겠습니까?')) {
-            try {
-              await apiApproveRequest(requestId);
-              fetchData();
-            } catch (err) {
-              alert(err.message);
-            }
-        }
-    };
-  
-    const handleReject = async (requestId) => {
-        if (window.confirm('이 사용자의 아이디 신청을 거절하시겠습니까?')) {
-            try {
-                await apiRejectRequest(requestId);
-                setRequests(prev => prev.filter(req => req.id !== requestId));
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-    };
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleEditUser = (user) => {
-        setEditingUser({ 
-            ...user, 
-            본부: user.본부 || '미지정',
-            지사: user.지사 || '미지정',
-        }); 
-    };
+  const handleApprove = async (id) => { if(window.confirm('승인하시겠습니까?')) { await apiApproveRequest(id); fetchData(); } };
+  const handleReject = async (id) => { if(window.confirm('거절하시겠습니까?')) { await apiRejectRequest(id); fetchData(); } };
+  const handleDeleteUser = async (id) => { if(window.confirm('삭제하시겠습니까?')) { await apiDeleteUser(id); fetchData(); } };
 
-    const handleCancelEdit = () => {
-        setEditingUser(null);
-    };
-
-    const handleUpdateUser = async () => {
-        if (window.confirm(`'${editingUser.username}' 사용자의 정보를 저장하시겠습니까?`)) {
-            try {
-                await apiUpdateUser({
-                    id: editingUser.id,
-                    password: editingUser.password,
-                    grade: editingUser.grade,
-                    본부: editingUser.본부, 
-                    지사: editingUser.지사, 
-                });
-                setEditingUser(null);
-                fetchData();
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-    };
-    
-    const handleDeleteUser = async (userId, username) => {
-        if (window.confirm(`정말로 '${username}' 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
-            try {
-                await apiDeleteUser(userId);
-                fetchData();
-            } catch (err) {
-                alert(err.message);
-            }
-        }
-    };
-
-    const handleEditingUserChange = (e) => {
-        const { name, value } = e.target;
-        setEditingUser(prev => ({ ...prev, [name]: value }));
-    };
-  
-    return (
-      <div className="p-8 min-h-screen bg-gray-100">
-        <div className="w-full bg-white p-6 rounded-lg shadow-md">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">👑 관리자 패널</h1>
-                <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">홈으로 가기</button>
-            </div>
-  
-            {loading && <p className="text-center">데이터를 불러오는 중입니다...</p>}
-            {error && <p className="text-center text-red-500">{error}</p>}
-            
-            {!loading && !error && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div>
-                        <h2 className="text-2xl font-semibold mb-4">아이디 신청 목록</h2>
-                        <div className="overflow-x-auto border rounded-lg">
-                            <table className="min-w-full bg-white">
-                                <thead className="bg-gray-200">
-                                    <tr>
-                                        <th className="py-2 px-4 border-b">신청 아이디</th>
-                                        <th className="py-2 px-4 border-b">작업</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {requests.length > 0 ? (
-                                        requests.map(req => (
-                                            <tr key={req.id}>
-                                                <td className="py-2 px-4 border-b text-center">{req.username}</td>
-                                                <td className="py-2 px-4 border-b text-center">
-                                                    <button onClick={() => handleApprove(req.id)} className="text-sm bg-green-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-green-600">승인</button>
-                                                    <button onClick={() => handleReject(req.id)} className="text-sm bg-red-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-red-600">거절</button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="2" className="py-4 px-4 text-center text-gray-500">새로운 아이디 신청이 없습니다.</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div>
-                        <h2 className="text-2xl font-semibold mb-4">승인된 사용자 관리</h2>
-                        <div className="overflow-x-auto border rounded-lg">
-                            <table className="min-w-full bg-white">
-                                <thead className="bg-gray-200">
-                                    <tr>
-                                        <th className="py-2 px-4 border-b">아이디</th>
-                                        <th className="py-2 px-4 border-b">비밀번호</th>
-                                        <th className="py-2 px-4 border-b">등급</th>
-                                        <th className="py-2 px-4 border-b">본부</th>
-                                        <th className="py-2 px-4 border-b">지사</th>
-                                        <th className="py-2 px-4 border-b">작업</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {users.map(user => (
-                                        <tr key={user.id}>
-                                            {editingUser && editingUser.id === user.id ? (
-                                                <>
-                                                    <td className="py-2 px-4 border-b text-center">{user.username}</td>
-                                                    <td className="py-2 px-4 border-b"><input type="text" name="password" value={editingUser.password} onChange={handleEditingUserChange} className="w-full px-2 py-1 border rounded-md"/></td>
-                                                    <td className="py-2 px-4 border-b"><input type="text" name="grade" value={editingUser.grade} onChange={handleEditingUserChange} className="w-full px-2 py-1 border rounded-md"/></td>
-                                                    <td className="py-2 px-4 border-b"><input type="text" name="본부" value={editingUser.본부} onChange={handleEditingUserChange} className="w-full px-2 py-1 border rounded-md"/></td>
-                                                    <td className="py-2 px-4 border-b"><input type="text" name="지사" value={editingUser.지사} onChange={handleEditingUserChange} className="w-full px-2 py-1 border rounded-md"/></td>
-                                                    <td className="py-2 px-4 border-b text-center whitespace-nowrap">
-                                                        <button onClick={handleUpdateUser} className="text-sm bg-blue-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-blue-600">저장</button>
-                                                        <button onClick={handleCancelEdit} className="text-sm bg-gray-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-gray-600">취소</button>
-                                                    </td>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <td className="py-2 px-4 border-b text-center">{user.username}</td>
-                                                    <td className="py-2 px-4 border-b text-center">{user.password}</td>
-                                                    <td className="py-2 px-4 border-b text-center">{user.grade}</td>
-                                                    <td className="py-2 px-4 border-b text-center">{user.본부 || '미지정'}</td>
-                                                    <td className="py-2 px-4 border-b text-center">{user.지사 || '미지정'}</td>
-                                                    <td className="py-2 px-4 border-b text-center whitespace-nowrap">
-                                                        <button onClick={() => handleEditUser(user)} className="text-sm bg-yellow-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-yellow-600">수정</button>
-                                                        <button onClick={() => handleDeleteUser(user.id, user.username)} className="text-sm bg-red-500 text-white px-2 py-1 rounded-md mr-2 hover:bg-red-600">삭제</button>
-                                                    </td>
-                                                </>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-      </div>
-    );
+  return (
+    <Box sx={{ p:3, minHeight:'100vh' }}>
+      <Paper sx={{ p:2, mb:3, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <Typography variant="h4">👑 관리자 패널</Typography>
+        <Button onClick={onGoToDashboard} variant="contained">홈으로</Button>
+      </Paper>
+      {loading && <Typography>데이터 로딩중...</Typography>}
+      {error && <Alert severity="error">{error}</Alert>}
+      {/* 요청 목록 */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p:2 }}>
+            <Typography variant="h6">아이디 신청 목록</Typography>
+            {requests.map(r => (
+              <Box key={r.id} sx={{ display:'flex', justifyContent:'space-between', my:1 }}>
+                <Typography>{r.username}</Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button onClick={()=>handleApprove(r.id)} size="small" variant="contained" color="success">승인</Button>
+                  <Button onClick={()=>handleReject(r.id)} size="small" variant="contained" color="error">거절</Button>
+                </Stack>
+              </Box>
+            ))}
+          </Paper>
+        </Grid>
+        {/* 사용자 관리 */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p:2 }}>
+            <Typography variant="h6">승인된 사용자 관리</Typography>
+            {users.map(u => (
+              <Box key={u.id} sx={{ display:'flex', justifyContent:'space-between', my:1 }}>
+                <Typography>{u.username}</Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button onClick={()=>handleDeleteUser(u.id)} size="small" variant="contained" color="error">삭제</Button>
+                </Stack>
+              </Box>
+            ))}
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 }
+
 
 // --- MenuPage1 (조건 검색 1) ---
 function MenuPage1({ onGoToDashboard }) {
