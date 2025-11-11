@@ -150,7 +150,7 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="아이디"
+                placeholder="사용자"
                 className="w-full px-3 py-2 border rounded-md"
                 required
               />
@@ -176,7 +176,7 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
             onClick={onShowRegisterModal}
             className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-colors"
           >
-            아이디 신청하기
+            사용자 신청하기
           </button>
         </div>
       </div>
