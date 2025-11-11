@@ -1,3 +1,7 @@
+/* ============================= */
+/* 기존 Vite App.css 내용 그대로 */
+/* ============================= */
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +43,46 @@
 
 .read-the-docs {
   color: #888;
+}
+
+
+/* ============================= */
+/* 새로 추가한 스타일들          */
+/* ============================= */
+
+/* 폰트 적용 */
+@font-face {
+    font-family: 'Tenada';
+    src: url('./fonts/Tenada-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* 앱 전체에 폰트 적용 */
+body {
+    font-family: 'Tenada', sans-serif;
+}
+
+/* 카드 반투명 + 블러 */
+.card {
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* 버튼 스타일 */
+.button {
+    background-color: #3b82f6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.button:hover {
+    background-color: #2563eb;
 }
