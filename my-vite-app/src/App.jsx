@@ -124,13 +124,13 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
         loop
         muted
         playsInline
-        className="absolute top-0 left-0 w-full h-full object-contain"
+        className="absolute top-0 left-0 w-full h-full object-cover"
       >
         <source src="/3logo.mp4" type="video/mp4" />
         브라우저가 video 태그를 지원하지 않습니다.
       </video>
 
-      {/* ✨ 상단 중앙 텍스트 (그대로 유지) */}
+      {/* ✨ 상단 중앙 텍스트 */}
       <div className="absolute top-[10%] w-full text-center z-20 px-4">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
           설계사 영업지원 툴
@@ -143,12 +143,9 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
       {/* 🔒 로그인 박스 (우측 중앙) */}
       <div className="absolute right-[5%] top-1/2 -translate-y-1/2 z-20">
         <div
-          className="p-8 rounded-2xl shadow-2xl w-80 sm:w-96 backdrop-blur-md transition-all"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0)', // ✅ 완전 투명 (0 ~ 1 사이 값으로 조절 가능)
-          }}
+          className="p-6 sm:p-8 rounded-2xl shadow-2xl w-64 sm:w-72 md:w-80 backdrop-blur-md transition-all"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0)' }}
         >
-          <h2 className="text-2xl font-bold mb-6 text-center text-gray-800"></h2>
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
           <form onSubmit={handleSubmit}>
