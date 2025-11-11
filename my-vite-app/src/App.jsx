@@ -141,7 +141,7 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
 
       {/* 🔒 로그인 박스 (좌측 상단 고정) */}
       <div className="absolute top-10 left-10 z-20">
-        <div className="p-8 bg-white/90 rounded-2xl shadow-2xl w-80 sm:w-96 backdrop-blur-md">
+        <div className="p-8 bg-white/50 rounded-2xl shadow-2xl w-80 sm:w-96 backdrop-blur-md">
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-800"></h2>
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
