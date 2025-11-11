@@ -132,7 +132,7 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
       {/* ✨ 상단 중앙 텍스트 (그대로 유지) */}
       <div className="absolute top-[10%] w-full text-center z-20 px-4">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-          메테오 설계사 영업지원 툴
+          설계사 영업지원 툴
         </h1>
         <p className="text-base sm:text-lg md:text-xl text-gray-100 mt-3 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
           효율적인 영업을 위한 통합 관리 플랫폼
