@@ -116,7 +116,7 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen w-full overflow-hidden">
+    <div className="relative min-h-screen w-full overflow-hidden">
       {/* 🎥 배경 영상 */}
       <video
         autoPlay
@@ -129,61 +129,64 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
         브라우저가 video 태그를 지원하지 않습니다.
       </video>
 
-      {/* ✨ 반응형 상단 텍스트 */}
+      {/* ✨ 상단 중앙 텍스트 (그대로 유지) */}
       <div className="absolute top-[10%] w-full text-center z-20 px-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition-all duration-300">
-          설계사 영업지원 툴
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+          메테오 설계사 영업지원 툴
         </h1>
-        <p className="text-base sm:text-lg md:text-xl text-gray-100 mt-3 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] transition-all duration-300">
+        <p className="text-base sm:text-lg md:text-xl text-gray-100 mt-3 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
           효율적인 영업을 위한 통합 관리 플랫폼
         </p>
       </div>
 
-      {/* 🔒 로그인 박스 */}
-      <div className="relative p-8 bg-white/90 rounded-2xl shadow-2xl w-11/12 sm:w-96 z-10 backdrop-blur-md">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">로그인</h2>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+      {/* 🔒 로그인 박스 (좌측 상단 고정) */}
+      <div className="absolute top-10 left-10 z-20">
+        <div className="p-8 bg-white/90 rounded-2xl shadow-2xl w-80 sm:w-96 backdrop-blur-md">
+          <h2 className="text-2xl font-bold mb-6 text-center text-gray-800"></h2>
+          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="아이디"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-              required
-            />
-          </div>
-          <div className="mb-6">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="비밀번호"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="사용자"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                required
+              />
+            </div>
+            <div className="mb-6">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all"
+            >
+              로그인
+            </button>
+          </form>
 
           <button
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all"
+            onClick={onShowRegisterModal}
+            className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-all"
           >
-            로그인
+            사용자 신청하기
           </button>
-        </form>
-
-        <button
-          onClick={onShowRegisterModal}
-          className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-all"
-        >
-          아이디 신청하기
-        </button>
+        </div>
       </div>
     </div>
   );
 }
+
 
 
 
