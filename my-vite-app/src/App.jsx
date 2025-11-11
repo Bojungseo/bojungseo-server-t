@@ -139,9 +139,14 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
         </p>
       </div>
 
-      {/* 🔒 로그인 박스 (좌측 상단 고정) */}
-      <div className="absolute top-10 left-10 z-20">
-        <div className="p-8 bg-white/50 rounded-2xl shadow-2xl w-80 sm:w-96 backdrop-blur-md">
+      {/* 🔒 로그인 박스 (우측 중앙) */}
+      <div className="absolute right-[5%] top-1/2 -translate-y-1/2 z-20">
+        <div
+          className="p-8 rounded-2xl shadow-2xl w-80 sm:w-96 backdrop-blur-md transition-all"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0)', // ✅ 완전 투명 (0 ~ 1 사이 값으로 조절 가능)
+          }}
+        >
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-800"></h2>
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
@@ -186,7 +191,6 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
     </div>
   );
 }
-
 
 
 
