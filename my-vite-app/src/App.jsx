@@ -307,6 +307,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
         return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
     };
 
+    // 사용자 정보 카드
     const UserInfoCard = () => (
         <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full">
             <h2 className="text-xl font-bold mb-3 border-b pb-2">사용자 정보</h2>
@@ -331,6 +332,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
         </div>
     );
 
+    // 지원 기능 세로 박스
     const QuickLinksVertical = () => {
         const isManager = user.grade === '최고 관리자';
         const isRegular2 = user.grade === '일반 회원2';
@@ -376,6 +378,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
 
             <div className="p-4 md:p-8 min-h-screen">
                 <div className="w-full">
+                    {/* 상단 타이틀 + 로그아웃 */}
                     <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md mb-8">
                         <div className="flex justify-between items-center">
                             <h1 className="text-3xl font-bold">설계사 업무지원</h1>
@@ -388,8 +391,9 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                         </div>
                     </div>
 
-                    {/* 사용자 정보 카드 + 지원기능 */}
+                    {/* 사용자 정보 + 캘린더 + 지원 기능 */}
                     <div className="flex justify-between items-start gap-8 mb-8">
+                        {/* 왼쪽: 사용자 정보 */}
                         <div className="w-full max-w-sm">
                             <UserInfoCard />
                             {user.grade === '최고 관리자' && (
@@ -403,6 +407,13 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                                 </div>
                             )}
                         </div>
+
+                        {/* 중앙: 캘린더 */}
+                        <div className="flex-1">
+                            <DashboardCalendar userId={user.id} />
+                        </div>
+
+                        {/* 오른쪽: 지원 기능 */}
                         <div className="flex-shrink-0">
                             <QuickLinksVertical />
                         </div>
@@ -429,18 +440,12 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                         </div>
                     </div>
 
-                    {/* 🔵 캘린더 추가 */}
-                    <div className="flex justify-center mb-8">
-                        <div className="w-full max-w-5xl">
-                            <DashboardCalendar userId={user.id} />
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
     );
 }
+
 
 
 // --- AdminPanelPage (변경 없음) ---
