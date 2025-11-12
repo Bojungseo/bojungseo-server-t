@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { users } from "./PageData"; // src/PageData.js에서 불러오기
 import DashboardCalendar from "./DashboardCalendar"; // Firebase 캘린더 import
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from './firebase';
 
 
 // 백엔드 서버의 주소입니다.
@@ -1617,16 +1619,34 @@ function App() {
   }, []);
 
   const handleLogin = async (username, password) => {
+  try {
+    // 1️⃣ 기존 백엔드 로그인
     const data = await apiLogin(username, password);
+
+    // 로컬 스토리지에 로그인 정보 저장 (1시간 만료)
     const now = new Date();
     const item = {
       user: data.user,
       expiry: now.getTime() + (60 * 60 * 1000), // 1 hour
     };
     localStorage.setItem('loggedInUser', JSON.stringify(item));
+
+    // 상태 업데이트
     setUser(data.user);
     setCurrentPage('dashboard');
-  };
+
+    // 2️⃣ Firebase Authentication 로그인
+    // 여기서는 username을 이메일처럼 사용한다고 가정
+    // 만약 username과 Firebase 이메일이 다르면 별도 매핑 필요
+    const firebaseUserCredential = await signInWithEmailAndPassword(auth, username, password);
+    const firebaseUser = firebaseUserCredential.user;
+    console.log("Firebase 로그인 성공:", firebaseUser.uid);
+
+  } catch (error) {
+    console.error("로그인 실패:", error.message);
+    throw new Error(error.message || "로그인 실패");
+  }
+};
 
   const handleLogout = () => {
     localStorage.removeItem('loggedInUser');
