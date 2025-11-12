@@ -12,13 +12,14 @@ import {
   doc,
   query,
   where,
+  updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "./firebase"; // Firebase 초기화
 
 function DashboardCalendar() {
   const [events, setEvents] = useState([]);
 
-  // Firestore 실시간 구독 (로그인한 사용자 이벤트만)
+  // 🔹 Firestore 실시간 구독 (로그인한 사용자 이벤트만)
   useEffect(() => {
     const currentUserId = auth.currentUser?.uid;
     if (!currentUserId) return;
@@ -35,7 +36,7 @@ function DashboardCalendar() {
     return () => unsubscribe();
   }, []);
 
-  // 날짜 클릭 → 이벤트 추가
+  // 🔹 날짜 클릭 → 이벤트 추가
   const handleDateClick = async (info) => {
     const currentUserId = auth.currentUser?.uid;
     if (!currentUserId) {
@@ -51,8 +52,9 @@ function DashboardCalendar() {
         title,
         start: info.dateStr,
         end: info.dateStr,
-        userId: currentUserId, // 🔥 로그인한 UID 저장
+        userId: currentUserId,
         allDay: true,
+        createdAt: new Date(),
       });
     } catch (err) {
       console.error("이벤트 추가 실패:", err);
@@ -60,7 +62,7 @@ function DashboardCalendar() {
     }
   };
 
-  // 이벤트 클릭 → 삭제
+  // 🔹 이벤트 클릭 → 삭제
   const handleEventClick = async (info) => {
     const currentUserId = auth.currentUser?.uid;
     if (!currentUserId) {
@@ -68,9 +70,7 @@ function DashboardCalendar() {
       return;
     }
 
-    const confirmDelete = window.confirm(
-      `"${info.event.title}" 이벤트를 삭제하시겠습니까?`
-    );
+    const confirmDelete = window.confirm(`"${info.event.title}" 이벤트를 삭제하시겠습니까?`);
     if (!confirmDelete) return;
 
     try {
@@ -78,6 +78,27 @@ function DashboardCalendar() {
     } catch (err) {
       console.error("이벤트 삭제 실패:", err);
       alert("삭제 실패");
+    }
+  };
+
+  // 🔹 드래그 앤 드롭 → 날짜 변경
+  const handleEventDrop = async (info) => {
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) {
+      alert("로그인이 필요합니다.");
+      info.revert();
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "events", info.event.id), {
+        start: info.event.startStr,
+        end: info.event.endStr || info.event.startStr,
+      });
+    } catch (err) {
+      console.error("이벤트 날짜 변경 실패:", err);
+      alert("이벤트 날짜 변경 실패");
+      info.revert();
     }
   };
 
@@ -102,6 +123,7 @@ function DashboardCalendar() {
         eventClick={handleEventClick}
         editable={true}
         selectable={true}
+        eventDrop={handleEventDrop} // 드래그 앤 드롭 처리
       />
     </div>
   );
