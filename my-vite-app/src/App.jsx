@@ -1602,7 +1602,9 @@ function App() {
   const [currentPage, setCurrentPage] = useState('login');
   const [isLoading, setIsLoading] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false); 
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
+  // ✅ 새로고침 시 세션 체크
   useEffect(() => {
     const savedUserItem = localStorage.getItem('loggedInUser');
     if (savedUserItem) {
@@ -1618,123 +1620,118 @@ function App() {
     setIsLoading(false);
   }, []);
 
+  // 🔑 로그인 처리 (백엔드 + Firebase)
   const handleLogin = async (username, password) => {
-  try {
-    // 1️⃣ 기존 백엔드 로그인 (유효성 검증, 등급 정보 등 서버 기반)
-    const data = await apiLogin(username, password);
-
-    // 2️⃣ Firebase Authentication 로그인 시도
-    // username을 Firebase 이메일 형태로 변환 (예: user → user@myvibe.com)
-    const email = `${username}@320.com`; 
-
     try {
-      const firebaseUserCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = firebaseUserCredential.user;
-      console.log("✅ Firebase 로그인 성공:", firebaseUser.email, firebaseUser.uid);
-    } catch (firebaseError) {
-      console.warn("⚠️ Firebase 로그인 실패:", firebaseError.message);
-      // Firebase에 해당 유저가 없으면, Firebase Auth에 계정이 없다는 뜻이므로
-      // 필요한 경우 createUserWithEmailAndPassword로 자동 생성 로직을 넣을 수 있음
+      // 1️⃣ 백엔드 로그인
+      const data = await apiLogin(username, password);
+
+      // 2️⃣ Firebase Authentication 로그인
+      const email = `${username}@320.com`; // 🔥 고정 도메인 이메일 생성
+      try {
+        const firebaseUserCredential = await signInWithEmailAndPassword(auth, email, password);
+        const firebaseUser = firebaseUserCredential.user;
+        console.log("✅ Firebase 로그인 성공:", firebaseUser.email, firebaseUser.uid);
+      } catch (firebaseError) {
+        console.warn("⚠️ Firebase 로그인 실패:", firebaseError.message);
+        // 필요 시 createUserWithEmailAndPassword 로직 추가 가능
+      }
+
+      // 3️⃣ 로컬 스토리지에 로그인 정보 저장 (1시간 만료)
+      const now = new Date();
+      const item = {
+        user: data.user,
+        expiry: now.getTime() + 60 * 60 * 1000, // 1시간
+      };
+      localStorage.setItem('loggedInUser', JSON.stringify(item));
+
+      // 4️⃣ 상태 업데이트 및 페이지 전환
+      setUser(data.user);
+      setCurrentPage('dashboard');
+
+    } catch (error) {
+      console.error("❌ 로그인 전체 실패:", error.message);
+      throw new Error(error.message || "로그인 실패");
     }
+  };
 
-    // 3️⃣ 로컬 스토리지 저장 (백엔드 로그인 정보 유지)
-    const now = new Date();
-    const item = {
-      user: data.user,
-      expiry: now.getTime() + (60 * 60 * 1000), // 1시간 유지
-    };
-    localStorage.setItem("loggedInUser", JSON.stringify(item));
-
-    // 4️⃣ 상태 업데이트 (기존 동작 유지)
-    setUser(data.user);
-    setCurrentPage("dashboard");
-
-  } catch (error) {
-    console.error("❌ 로그인 전체 실패:", error.message);
-    throw new Error(error.message || "로그인 실패");
-  }
-};
-
+  // 🔑 로그아웃
   const handleLogout = () => {
     localStorage.removeItem('loggedInUser');
     setUser(null);
     setCurrentPage('login');
   };
 
-  const onGoToStandardPage = () => setCurrentPage('menuPageStandard');  
-    
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-
+  // 🔑 아이디 신청 성공 시
   const handleRegisterSuccess = () => {
-      setShowRegisterModal(false); // 신청 모달 닫기
-      setShowSuccessModal(true);   // 성공 모달 열기
-  }
+    setShowRegisterModal(false);
+    setShowSuccessModal(true);
+  };
 
+  // 🔑 페이지 렌더링
   const renderPage = () => {
     if (isLoading) {
       return <div className="flex items-center justify-center min-h-screen">세션을 확인 중입니다...</div>;
     }
 
     if (!user) {
-        return (
-            <>
-                <LoginPage 
-                    onLogin={handleLogin} 
-                    onShowRegisterModal={() => setShowRegisterModal(true)} // LoginPage에 prop 전달
-                />
-                {/* ✨ 아이디 신청 모달 렌더링 */}
-                {showRegisterModal && (
-                    <RequestIdModal 
-                        onClose={() => setShowRegisterModal(false)} 
-                        onRegisterSuccess={handleRegisterSuccess} // 성공 시 호출될 함수 전달
-                    />
-                )}
-                 {/* ✨ 신청 성공 메시지 모달 렌더링 */}
-                {showSuccessModal && (
-                    <SuccessModal 
-                        onClose={() => setShowSuccessModal(false)}
-                    />
-                )}
-            </>
-        );
+      return (
+        <>
+          <LoginPage 
+            onLogin={handleLogin} 
+            onShowRegisterModal={() => setShowRegisterModal(true)} 
+          />
+          {showRegisterModal && (
+            <RequestIdModal 
+              onClose={() => setShowRegisterModal(false)} 
+              onRegisterSuccess={handleRegisterSuccess} 
+            />
+          )}
+          {showSuccessModal && (
+            <SuccessModal 
+              onClose={() => setShowSuccessModal(false)} 
+            />
+          )}
+        </>
+      );
     }
 
+    // 로그인된 상태에서 페이지 전환
     switch (currentPage) {
-        case 'dashboard':
-            return <DashboardPage 
-                        user={user} 
-                        onLogout={handleLogout} 
-                        onGoToAdminPanel={() => setCurrentPage('adminPanel')}
-                        onGoToMenuPage1={() => setCurrentPage('menuPage1')}
-                        onGoToMenuPage2={() => setCurrentPage('menuPage2')}
-                        onGoToSettings={() => setCurrentPage('settings')}
-                        onGoToExtra1={() => setCurrentPage('extra1')}
-                        onGoToExtra2={() => setCurrentPage('extra2')}
-                        onGoToExtra3={() => setCurrentPage('extra3')}
-                        onGoToStandardPage={() => setCurrentPage('menuPageStandard')} // ✅ 추가
-
-                    />;
-        case 'adminPanel':
-            if (user.grade !== '최고 관리자') {
-                setCurrentPage('dashboard');
-                return <DashboardPage user={user} onLogout={handleLogout} onGoToAdminPanel={() => setCurrentPage('adminPanel')} onGoToMenuPage1={() => setCurrentPage('menuPage1')} onGoToMenuPage2={() => setCurrentPage('menuPage2')} onGoToSettings={() => setCurrentPage('settings')} onGoToExtra1={() => setCurrentPage('extra1')} onGoToExtra2={() => setCurrentPage('extra2')} onGoToExtra3={() => setCurrentPage('extra3')} />;
-            }
-            return <AdminPanelPage onGoToDashboard={() => setCurrentPage('dashboard')} />;
-        case 'menuPage1':
-            return <MenuPage1 onGoToDashboard={() => setCurrentPage('dashboard')} />;
-        case 'menuPage2':
-            return <MenuPage2 onGoToDashboard={() => setCurrentPage('dashboard')} />;
-        case 'settings':
-            return <SettingsPage onGoToDashboard={() => setCurrentPage('dashboard')} />;
-        case 'extra1':
-            return <ExtraMenu1 onGoToDashboard={() => setCurrentPage('dashboard')} />;
-        case 'extra2':
-            return <ExtraMenu2 onGoToDashboard={() => setCurrentPage('dashboard')} />;
-        case 'extra3':
-            return <ExtraMenu3 onGoToDashboard={() => setCurrentPage('dashboard')} />;
-        default:
-            handleLogout();
-            return <LoginPage onLogin={handleLogin} onShowRegisterModal={() => setShowRegisterModal(true)} />; // 기본값 처리 시에도 모달 표시 함수 전달
+      case 'dashboard':
+        return <DashboardPage 
+                  user={user} 
+                  onLogout={handleLogout} 
+                  onGoToAdminPanel={() => setCurrentPage('adminPanel')}
+                  onGoToMenuPage1={() => setCurrentPage('menuPage1')}
+                  onGoToMenuPage2={() => setCurrentPage('menuPage2')}
+                  onGoToSettings={() => setCurrentPage('settings')}
+                  onGoToExtra1={() => setCurrentPage('extra1')}
+                  onGoToExtra2={() => setCurrentPage('extra2')}
+                  onGoToExtra3={() => setCurrentPage('extra3')}
+                  onGoToStandardPage={() => setCurrentPage('menuPageStandard')}
+               />;
+      case 'adminPanel':
+        if (user.grade !== '최고 관리자') {
+          setCurrentPage('dashboard');
+          return <DashboardPage user={user} onLogout={handleLogout} onGoToAdminPanel={() => setCurrentPage('adminPanel')} onGoToMenuPage1={() => setCurrentPage('menuPage1')} onGoToMenuPage2={() => setCurrentPage('menuPage2')} onGoToSettings={() => setCurrentPage('settings')} onGoToExtra1={() => setCurrentPage('extra1')} onGoToExtra2={() => setCurrentPage('extra2')} onGoToExtra3={() => setCurrentPage('extra3')} />;
+        }
+        return <AdminPanelPage onGoToDashboard={() => setCurrentPage('dashboard')} />;
+      case 'menuPage1':
+        return <MenuPage1 onGoToDashboard={() => setCurrentPage('dashboard')} />;
+      case 'menuPage2':
+        return <MenuPage2 onGoToDashboard={() => setCurrentPage('dashboard')} />;
+      case 'settings':
+        return <SettingsPage onGoToDashboard={() => setCurrentPage('dashboard')} />;
+      case 'extra1':
+        return <ExtraMenu1 onGoToDashboard={() => setCurrentPage('dashboard')} />;
+      case 'extra2':
+        return <ExtraMenu2 onGoToDashboard={() => setCurrentPage('dashboard')} />;
+      case 'extra3':
+        return <ExtraMenu3 onGoToDashboard={() => setCurrentPage('dashboard')} />;
+      default:
+        handleLogout();
+        return <LoginPage onLogin={handleLogin} onShowRegisterModal={() => setShowRegisterModal(true)} />;
     }
   };
 
