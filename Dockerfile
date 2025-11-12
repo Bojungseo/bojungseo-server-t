@@ -23,7 +23,24 @@ COPY my-backend-server/ ./my-backend-server/
 # 5️⃣ 프론트엔드 의존성 설치 및 빌드
 # ===============================
 COPY my-vite-app/ ./my-vite-app/
-# ✅ 여기서 package.json에 있는 Material UI 등 모든 의존성 자동 설치
+
+# 🔹 빌드 시 환경변수 ARG 설정
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ARG VITE_FIREBASE_STORAGE_BUCKET
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID
+ARG VITE_FIREBASE_APP_ID
+
+# 🔹 환경변수 Docker ENV로 설정 (빌드 과정에서 Vite 접근용)
+ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY
+ENV VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN
+ENV VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID
+ENV VITE_FIREBASE_STORAGE_BUCKET=$VITE_FIREBASE_STORAGE_BUCKET
+ENV VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID
+ENV VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
+
+# ✅ 모든 프론트엔드 의존성 설치 및 빌드
 RUN cd my-vite-app && npm install && npm run build
 
 # ===============================
