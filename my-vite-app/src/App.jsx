@@ -1627,10 +1627,13 @@ function App() {
       const data = await apiLogin(username, password);
 
       // 2️⃣ Firebase Authentication 로그인
-      const email = `${username}@320.com`; // 🔥 고정 도메인 이메일 생성
+      const email = `${username}@320.com`;
+      let firebaseUid = null;
+
       try {
         const firebaseUserCredential = await signInWithEmailAndPassword(auth, email, password);
         const firebaseUser = firebaseUserCredential.user;
+        firebaseUid = firebaseUser.uid;
         console.log("✅ Firebase 로그인 성공:", firebaseUser.email, firebaseUser.uid);
       } catch (firebaseError) {
         console.warn("⚠️ Firebase 로그인 실패:", firebaseError.message);
@@ -1640,13 +1643,16 @@ function App() {
       // 3️⃣ 로컬 스토리지에 로그인 정보 저장 (1시간 만료)
       const now = new Date();
       const item = {
-        user: data.user,
-        expiry: now.getTime() + 60 * 60 * 1000, // 1시간
+        user: {
+          ...data.user,
+          firebaseUid, // ✅ UID 포함
+        },
+        expiry: now.getTime() + 60 * 60 * 1000,
       };
       localStorage.setItem('loggedInUser', JSON.stringify(item));
 
       // 4️⃣ 상태 업데이트 및 페이지 전환
-      setUser(data.user);
+      setUser(item.user);
       setCurrentPage('dashboard');
 
     } catch (error) {
@@ -1696,25 +1702,28 @@ function App() {
       );
     }
 
-    // 로그인된 상태에서 페이지 전환
+    // 로그인 상태
     switch (currentPage) {
       case 'dashboard':
-        return <DashboardPage 
-                  user={user} 
-                  onLogout={handleLogout} 
-                  onGoToAdminPanel={() => setCurrentPage('adminPanel')}
-                  onGoToMenuPage1={() => setCurrentPage('menuPage1')}
-                  onGoToMenuPage2={() => setCurrentPage('menuPage2')}
-                  onGoToSettings={() => setCurrentPage('settings')}
-                  onGoToExtra1={() => setCurrentPage('extra1')}
-                  onGoToExtra2={() => setCurrentPage('extra2')}
-                  onGoToExtra3={() => setCurrentPage('extra3')}
-                  onGoToStandardPage={() => setCurrentPage('menuPageStandard')}
-               />;
+        return (
+          <DashboardPage
+            user={user} // user.firebaseUid 포함
+            onLogout={handleLogout}
+            onGoToAdminPanel={() => setCurrentPage('adminPanel')}
+            onGoToMenuPage1={() => setCurrentPage('menuPage1')}
+            onGoToMenuPage2={() => setCurrentPage('menuPage2')}
+            onGoToSettings={() => setCurrentPage('settings')}
+            onGoToExtra1={() => setCurrentPage('extra1')}
+            onGoToExtra2={() => setCurrentPage('extra2')}
+            onGoToExtra3={() => setCurrentPage('extra3')}
+            onGoToStandardPage={() => setCurrentPage('menuPageStandard')}
+            firebaseUid={user.firebaseUid} // ✅ Firebase UID 전달
+          />
+        );
       case 'adminPanel':
         if (user.grade !== '최고 관리자') {
           setCurrentPage('dashboard');
-          return <DashboardPage user={user} onLogout={handleLogout} onGoToAdminPanel={() => setCurrentPage('adminPanel')} onGoToMenuPage1={() => setCurrentPage('menuPage1')} onGoToMenuPage2={() => setCurrentPage('menuPage2')} onGoToSettings={() => setCurrentPage('settings')} onGoToExtra1={() => setCurrentPage('extra1')} onGoToExtra2={() => setCurrentPage('extra2')} onGoToExtra3={() => setCurrentPage('extra3')} />;
+          return null;
         }
         return <AdminPanelPage onGoToDashboard={() => setCurrentPage('dashboard')} />;
       case 'menuPage1':
