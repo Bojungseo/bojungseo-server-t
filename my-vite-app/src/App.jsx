@@ -110,46 +110,11 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // 🔥 백엔드 + Firebase 로그인 통합
-  const handleLogin = async (username, password) => {
-    try {
-      // 1️⃣ 백엔드 로그인
-      const response = await fetch(`${BACKEND_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || '로그인 실패');
-
-      // 🔥 이메일 생성 (username + 고정 도메인)
-      const email = `${username}@320.com`;
-
-      // 2️⃣ Firebase 로그인
-      const firebaseUserCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Firebase 로그인 성공:', firebaseUserCredential.user.uid);
-
-      // 3️⃣ 로컬 스토리지에 로그인 정보 저장 (1시간 만료)
-      const now = new Date();
-      const item = {
-        user: { ...data.user, email },
-        expiry: now.getTime() + (60 * 60 * 1000),
-      };
-      localStorage.setItem('loggedInUser', JSON.stringify(item));
-
-      // 상태 업데이트
-      if (onLogin) onLogin(username, password); // 부모 컴포넌트로 로그인 상태 전달
-    } catch (err) {
-      console.error('로그인 실패:', err);
-      throw new Error(err.message || '로그인 실패');
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      await handleLogin(username, password);
+      await onLogin(username, password);
     } catch (err) {
       setError(err.message);
     }
@@ -158,18 +123,25 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* 🎥 배경 영상 */}
-      <video autoPlay loop muted playsInline className="absolute top-0 left-0 w-full h-full object-cover">
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute top-0 left-0 w-full h-full object-cover"
+      >
         <source src="/3logo.mp4" type="video/mp4" />
         브라우저가 video 태그를 지원하지 않습니다.
       </video>
-
+      
       {/* ✅ 우측 상단 고정 텍스트 */}
       <div className="absolute top-4 right-6 z-30 text-right">
         <p className="text-sm sm:text-base text-white drop-shadow-[0_1px_6px_rgba(0,0,0,0.6)]">
           <span className="font-bold text-white-300">승인된 사용자 외 사용 금지</span>
         </p>
       </div>
-
+        
+        
       {/* ✨ 상단 중앙 텍스트 */}
       <div className="absolute top-[10%] w-full text-center z-20 px-4">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
@@ -182,23 +154,46 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
 
       {/* 🔒 로그인 박스 (우측 중앙) */}
       <div className="absolute right-[5%] top-1/2 -translate-y-1/2 z-20">
-        <div className="p-6 sm:p-8 rounded-2xl shadow-2xl w-64 sm:w-72 md:w-80 backdrop-blur-md transition-all" style={{ backgroundColor: 'rgba(255, 255, 255, 0)' }}>
+        <div
+          className="p-6 sm:p-8 rounded-2xl shadow-2xl w-64 sm:w-72 md:w-80 backdrop-blur-md transition-all"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0)' }}
+        >
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="사용자" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" required />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="사용자"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                required
+              />
             </div>
             <div className="mb-6">
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" required />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                required
+              />
             </div>
 
-            <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all">
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-all"
+            >
               로그인
             </button>
           </form>
 
-          <button onClick={onShowRegisterModal} className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-all">
+          <button
+            onClick={onShowRegisterModal}
+            className="w-full mt-4 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-all"
+          >
             사용자 신청하기
           </button>
         </div>
@@ -206,6 +201,8 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
     </div>
   );
 }
+
+
 
 
 
