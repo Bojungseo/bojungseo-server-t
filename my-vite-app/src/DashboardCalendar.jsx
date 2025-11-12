@@ -4,15 +4,16 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { collection, addDoc, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, onSnapshot, deleteDoc, doc, query, where } from "firebase/firestore";
 import { db } from "./firebase"; // main.jsx와 같은 위치 기준
 
 function DashboardCalendar({ userId }) {
   const [events, setEvents] = useState([]);
 
-  // Firestore 실시간 구독
+  // Firestore 실시간 구독 (userId별)
   useEffect(() => {
-    const q = collection(db, "events");
+    if (!userId) return;
+    const q = query(collection(db, "events"), where("userId", "==", userId));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loaded = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -21,7 +22,7 @@ function DashboardCalendar({ userId }) {
       setEvents(loaded);
     });
     return () => unsubscribe();
-  }, []);
+  }, [userId]);
 
   // 날짜 클릭 → 이벤트 추가
   const handleDateClick = async (info) => {
