@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { users } from "./PageData"; // src/PageData.js에서 불러오기
+import DashboardCalendar from "./DashboardCalendar"; // Firebase 캘린더 import
+
 
 // 백엔드 서버의 주소입니다.
 const BACKEND_URL = '';
@@ -329,7 +331,6 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
         </div>
     );
 
-    // 🟢 바로가기 박스: 세로 버튼, 우측 고정
     const QuickLinksVertical = () => {
         const isManager = user.grade === '최고 관리자';
         const isRegular2 = user.grade === '일반 회원2';
@@ -387,7 +388,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                         </div>
                     </div>
 
-                    {/* 사용자 정보 카드 */}
+                    {/* 사용자 정보 카드 + 지원기능 */}
                     <div className="flex justify-between items-start gap-8 mb-8">
                         <div className="w-full max-w-sm">
                             <UserInfoCard />
@@ -402,14 +403,13 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                                 </div>
                             )}
                         </div>
-                        {/* 오른쪽 끝에 지원기능 박스 */}
                         <div className="flex-shrink-0">
                             <QuickLinksVertical />
                         </div>
                     </div>
 
                     {/* 공지사항 & 게시판 */}
-                    <div className="flex justify-between items-start gap-8">
+                    <div className="flex justify-between items-start gap-8 mb-8">
                         <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md max-w-sm w-full">
                             <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
                             <ul className="space-y-2">
@@ -428,11 +428,20 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                             </ul>
                         </div>
                     </div>
+
+                    {/* 🔵 캘린더 추가 */}
+                    <div className="flex justify-center mb-8">
+                        <div className="w-full max-w-5xl">
+                            <DashboardCalendar userId={user.id} />
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     );
 }
+
 
 // --- AdminPanelPage (변경 없음) ---
 function AdminPanelPage({ onGoToDashboard }) {
