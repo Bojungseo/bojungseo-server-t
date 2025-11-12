@@ -144,10 +144,10 @@ function LoginPage({ onLogin, onShowRegisterModal }) {
         
       {/* ✨ 상단 중앙 텍스트 */}
       <div className="absolute top-[10%] w-full text-center z-20 px-4">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
           설계사 영업지원
         </h1>
-        <p className="text-base sm:text-lg md:text-xl text-gray-100 mt-3 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]">
+        <p className="text-base sm:text-lg md:text-xl text-gray-100 mt-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
           효율적인 업무를 위한 통합 관리 플랫폼
         </p>
       </div>
