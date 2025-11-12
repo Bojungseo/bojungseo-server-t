@@ -1620,30 +1620,37 @@ function App() {
 
   const handleLogin = async (username, password) => {
   try {
-    // 1️⃣ 기존 백엔드 로그인
+    // 1️⃣ 기존 백엔드 로그인 (유효성 검증, 등급 정보 등 서버 기반)
     const data = await apiLogin(username, password);
 
-    // 로컬 스토리지에 로그인 정보 저장 (1시간 만료)
+    // 2️⃣ Firebase Authentication 로그인 시도
+    // username을 Firebase 이메일 형태로 변환 (예: user → user@myvibe.com)
+    const email = `${username}@320.com`; 
+
+    try {
+      const firebaseUserCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = firebaseUserCredential.user;
+      console.log("✅ Firebase 로그인 성공:", firebaseUser.email, firebaseUser.uid);
+    } catch (firebaseError) {
+      console.warn("⚠️ Firebase 로그인 실패:", firebaseError.message);
+      // Firebase에 해당 유저가 없으면, Firebase Auth에 계정이 없다는 뜻이므로
+      // 필요한 경우 createUserWithEmailAndPassword로 자동 생성 로직을 넣을 수 있음
+    }
+
+    // 3️⃣ 로컬 스토리지 저장 (백엔드 로그인 정보 유지)
     const now = new Date();
     const item = {
       user: data.user,
-      expiry: now.getTime() + (60 * 60 * 1000), // 1 hour
+      expiry: now.getTime() + (60 * 60 * 1000), // 1시간 유지
     };
-    localStorage.setItem('loggedInUser', JSON.stringify(item));
+    localStorage.setItem("loggedInUser", JSON.stringify(item));
 
-    // 상태 업데이트
+    // 4️⃣ 상태 업데이트 (기존 동작 유지)
     setUser(data.user);
-    setCurrentPage('dashboard');
-
-    // 2️⃣ Firebase Authentication 로그인
-    // 여기서는 username을 이메일처럼 사용한다고 가정
-    // 만약 username과 Firebase 이메일이 다르면 별도 매핑 필요
-    const firebaseUserCredential = await signInWithEmailAndPassword(auth, username, password);
-    const firebaseUser = firebaseUserCredential.user;
-    console.log("Firebase 로그인 성공:", firebaseUser.uid);
+    setCurrentPage("dashboard");
 
   } catch (error) {
-    console.error("로그인 실패:", error.message);
+    console.error("❌ 로그인 전체 실패:", error.message);
     throw new Error(error.message || "로그인 실패");
   }
 };
