@@ -202,17 +202,17 @@ app.post('/api/login', async (req, res) => {
         if (!userRow) return res.status(404).json({ message: '존재하지 않는 아이디입니다.' });
         if (userRow.get('password') !== password) return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
 
-        // ✅ Firebase 로그인용 고정 이메일
-        const firebaseEmail = process.env.FIXED_FIREBASE_EMAIL || "장성우@320.com";
+        // 🔥 이메일 자동 생성 (username@320.com)
+        const email = `${username}@320.com`;
 
         res.status(200).json({
             success: true,
             user: {
-                username: userRow.get('username'),   // 🔑 캘린더 필터용
+                username: userRow.get('username'),
                 grade: userRow.get('grade'),
                 본부: userRow.get('본부') || '미지정',
                 지사: userRow.get('지사') || '미지정',
-                email: firebaseEmail,
+                email,              // Firebase 로그인용
                 loginTime: new Date().toISOString(),
             }
         });
