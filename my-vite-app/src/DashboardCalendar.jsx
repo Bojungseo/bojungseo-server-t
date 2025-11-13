@@ -10,20 +10,22 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
+  query,
+  where,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "./firebase"; // Firebase 초기화
+import { db, auth } from "./firebase"; // Firebase 초기화
 
-function DashboardCalendar({ username }) {
+function DashboardCalendar() {
   const [events, setEvents] = useState([]);
 
-  // 🔹 username 기반 컬렉션 실시간 구독
+  // 🔹 Firestore 실시간 구독 (로그인한 사용자 이벤트만)
   useEffect(() => {
-    if (!username) return;
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) return;
 
-    const userCollectionRef = collection(db, username);
-
-    const unsubscribe = onSnapshot(userCollectionRef, (snapshot) => {
+    const q = query(collection(db, "events"), where("userId", "==", currentUserId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const loaded = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -32,11 +34,12 @@ function DashboardCalendar({ username }) {
     });
 
     return () => unsubscribe();
-  }, [username]);
+  }, []);
 
   // 🔹 날짜 클릭 → 이벤트 추가
   const handleDateClick = async (info) => {
-    if (!username) {
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) {
       alert("로그인이 필요합니다.");
       return;
     }
@@ -45,10 +48,11 @@ function DashboardCalendar({ username }) {
     if (!title) return;
 
     try {
-      await addDoc(collection(db, username), {
+      await addDoc(collection(db, "events"), {
         title,
         start: info.dateStr,
         end: info.dateStr,
+        userId: currentUserId,
         allDay: true,
         createdAt: new Date(),
       });
@@ -60,15 +64,17 @@ function DashboardCalendar({ username }) {
 
   // 🔹 이벤트 클릭 → 삭제
   const handleEventClick = async (info) => {
-    if (!username) return;
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
 
-    const confirmDelete = window.confirm(
-      `"${info.event.title}" 이벤트를 삭제하시겠습니까?`
-    );
+    const confirmDelete = window.confirm(`"${info.event.title}" 이벤트를 삭제하시겠습니까?`);
     if (!confirmDelete) return;
 
     try {
-      await deleteDoc(doc(db, username, info.event.id));
+      await deleteDoc(doc(db, "events", info.event.id));
     } catch (err) {
       console.error("이벤트 삭제 실패:", err);
       alert("삭제 실패");
@@ -77,13 +83,15 @@ function DashboardCalendar({ username }) {
 
   // 🔹 드래그 앤 드롭 → 날짜 변경
   const handleEventDrop = async (info) => {
-    if (!username) {
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) {
+      alert("로그인이 필요합니다.");
       info.revert();
       return;
     }
 
     try {
-      await updateDoc(doc(db, username, info.event.id), {
+      await updateDoc(doc(db, "events", info.event.id), {
         start: info.event.startStr,
         end: info.event.endStr || info.event.startStr,
       });
@@ -115,7 +123,7 @@ function DashboardCalendar({ username }) {
         eventClick={handleEventClick}
         editable={true}
         selectable={true}
-        eventDrop={handleEventDrop}
+        eventDrop={handleEventDrop} // 드래그 앤 드롭 처리
       />
     </div>
   );
