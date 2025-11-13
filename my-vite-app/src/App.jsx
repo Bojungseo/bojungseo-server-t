@@ -412,7 +412,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
 
                         {/* 중앙: 캘린더 */}
                         <div className="flex-1">
-                            <DashboardCalendar userId={user.id} />
+                            <DashboardCalendar userName={user.firebaseUid} />
                         </div>
 
                         {/* 오른쪽: 지원 기능 */}
