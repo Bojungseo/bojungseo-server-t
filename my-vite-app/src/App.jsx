@@ -1627,7 +1627,7 @@ function App() {
       const data = await apiLogin(username, password);
 
       // 2️⃣ Firebase Authentication 로그인
-      const email = `${username}@320.com`;
+      const email = "장성우@320.com";
       let firebaseUid = null;
 
       try {
