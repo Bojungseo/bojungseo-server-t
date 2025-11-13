@@ -32,6 +32,7 @@ function DashboardCalendar() {
     color: DEFAULT_COLORS[0],
   });
   const [customColor, setCustomColor] = useState("");
+  const [newEventDate, setNewEventDate] = useState(""); // 새 이벤트 날짜 선택용
 
   // 🔹 Firestore 실시간 구독
   useEffect(() => {
@@ -50,8 +51,9 @@ function DashboardCalendar() {
     return () => unsubscribe();
   }, []);
 
-  const handleDateClick = (info) => {
-    setModalData({ id: null, title: "", content: "", date: info.dateStr, color: DEFAULT_COLORS[0] });
+  // 🔹 상단 "일정 추가" 버튼 클릭
+  const handleAddButtonClick = () => {
+    setModalData({ id: null, title: "", content: "", date: newEventDate || "", color: DEFAULT_COLORS[0] });
     setCustomColor("");
     setModalOpen(true);
   };
@@ -87,6 +89,10 @@ function DashboardCalendar() {
           color: colorToSave,
         });
       } else {
+        if (!modalData.date) {
+          alert("날짜를 선택해주세요.");
+          return;
+        }
         await addDoc(collection(db, "events"), {
           title: modalData.title,
           content: modalData.content,
@@ -99,6 +105,7 @@ function DashboardCalendar() {
         });
       }
       setModalOpen(false);
+      setNewEventDate("");
     } catch (err) {
       console.error("이벤트 저장 실패:", err);
       alert("이벤트 저장에 실패했습니다.");
@@ -140,6 +147,22 @@ function DashboardCalendar() {
 
   return (
     <div className="bg-white p-4 rounded shadow relative">
+      {/* 상단 일정 추가 버튼 및 날짜 선택 */}
+      <div className="flex items-center mb-4 space-x-2">
+        <input
+          type="date"
+          value={newEventDate}
+          onChange={(e) => setNewEventDate(e.target.value)}
+          className="border p-2 rounded"
+        />
+        <button
+          onClick={handleAddButtonClick}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          일정 추가
+        </button>
+      </div>
+
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
@@ -157,7 +180,6 @@ function DashboardCalendar() {
           backgroundColor: e.color || DEFAULT_COLORS[0],
           borderColor: e.color || DEFAULT_COLORS[0],
         }))}
-        dateClick={handleDateClick}
         eventClick={handleEventClick}
         editable={true}
         selectable={true}
@@ -168,6 +190,20 @@ function DashboardCalendar() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
             <h2 className="text-lg font-bold mb-3">{modalData.id ? "이벤트 수정" : "새 이벤트"}</h2>
+
+            {/* 날짜 선택 */}
+            {!modalData.id && (
+              <div className="mb-3">
+                <label className="mr-2 font-semibold">날짜:</label>
+                <input
+                  type="date"
+                  value={modalData.date}
+                  onChange={(e) => setModalData({ ...modalData, date: e.target.value })}
+                  className="border p-2 rounded"
+                />
+              </div>
+            )}
+
             <input
               type="text"
               placeholder="제목"
