@@ -16,7 +16,10 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "./firebase";
 
-const COLORS = ["#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6"]; // 파란, 빨강, 초록, 주황, 보라
+const DEFAULT_COLORS = [
+  "#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6",
+  "#14B8A6", "#F472B6", "#FCD34D", "#A78BFA", "#60A5FA"
+];
 
 function DashboardCalendar() {
   const [events, setEvents] = useState([]);
@@ -26,8 +29,9 @@ function DashboardCalendar() {
     title: "",
     content: "",
     date: "",
-    color: COLORS[0],
+    color: DEFAULT_COLORS[0],
   });
+  const [customColor, setCustomColor] = useState("");
 
   // 🔹 Firestore 실시간 구독
   useEffect(() => {
@@ -46,13 +50,12 @@ function DashboardCalendar() {
     return () => unsubscribe();
   }, []);
 
-  // 🔹 날짜 클릭 → 모달 열기 (새 이벤트)
   const handleDateClick = (info) => {
-    setModalData({ id: null, title: "", content: "", date: info.dateStr, color: COLORS[0] });
+    setModalData({ id: null, title: "", content: "", date: info.dateStr, color: DEFAULT_COLORS[0] });
+    setCustomColor("");
     setModalOpen(true);
   };
 
-  // 🔹 이벤트 클릭 → 모달 열기 (수정/삭제)
   const handleEventClick = (info) => {
     const existingEvent = events.find((e) => e.id === info.event.id);
     if (!existingEvent) return;
@@ -61,12 +64,12 @@ function DashboardCalendar() {
       title: existingEvent.title,
       content: existingEvent.content || "",
       date: existingEvent.start,
-      color: existingEvent.color || COLORS[0],
+      color: existingEvent.color || DEFAULT_COLORS[0],
     });
+    setCustomColor("");
     setModalOpen(true);
   };
 
-  // 🔹 모달 저장
   const handleSave = async () => {
     const currentUserId = auth.currentUser?.uid;
     if (!currentUserId) {
@@ -74,16 +77,16 @@ function DashboardCalendar() {
       return;
     }
 
+    const colorToSave = customColor || modalData.color;
+
     try {
       if (modalData.id) {
-        // 수정
         await updateDoc(doc(db, "events", modalData.id), {
           title: modalData.title,
           content: modalData.content,
-          color: modalData.color,
+          color: colorToSave,
         });
       } else {
-        // 새로 추가
         await addDoc(collection(db, "events"), {
           title: modalData.title,
           content: modalData.content,
@@ -91,7 +94,7 @@ function DashboardCalendar() {
           end: modalData.date,
           userId: currentUserId,
           allDay: true,
-          color: modalData.color,
+          color: colorToSave,
           createdAt: new Date(),
         });
       }
@@ -102,7 +105,6 @@ function DashboardCalendar() {
     }
   };
 
-  // 🔹 모달 삭제
   const handleDelete = async () => {
     if (!modalData.id) return;
     if (!window.confirm("정말로 삭제하시겠습니까?")) return;
@@ -116,7 +118,6 @@ function DashboardCalendar() {
     }
   };
 
-  // 🔹 드래그앤드롭
   const handleEventDrop = async (info) => {
     const currentUserId = auth.currentUser?.uid;
     if (!currentUserId) {
@@ -153,8 +154,8 @@ function DashboardCalendar() {
           start: e.start,
           end: e.end,
           allDay: e.allDay,
-          backgroundColor: e.color || COLORS[0],
-          borderColor: e.color || COLORS[0],
+          backgroundColor: e.color || DEFAULT_COLORS[0],
+          borderColor: e.color || DEFAULT_COLORS[0],
         }))}
         dateClick={handleDateClick}
         eventClick={handleEventClick}
@@ -163,7 +164,6 @@ function DashboardCalendar() {
         eventDrop={handleEventDrop}
       />
 
-      {/* 🔹 모달 */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg w-80">
@@ -182,17 +182,29 @@ function DashboardCalendar() {
               className="w-full border p-2 mb-2 rounded"
             />
             <div className="mb-2">
-              <span className="mr-2 font-semibold">색상:</span>
-              {COLORS.map((c) => (
+              <span className="mr-2 font-semibold">색상 선택:</span>
+              {DEFAULT_COLORS.map((c) => (
                 <button
                   key={c}
                   style={{ backgroundColor: c }}
                   className={`w-6 h-6 rounded-full mr-1 border-2 ${
                     modalData.color === c ? "border-black" : "border-gray-300"
                   }`}
-                  onClick={() => setModalData({ ...modalData, color: c })}
+                  onClick={() => {
+                    setModalData({ ...modalData, color: c });
+                    setCustomColor("");
+                  }}
                 />
               ))}
+            </div>
+            <div className="mb-2">
+              <span className="mr-2 font-semibold">커스텀 색상:</span>
+              <input
+                type="color"
+                value={customColor}
+                onChange={(e) => setCustomColor(e.target.value)}
+                className="w-16 h-8 p-0 border rounded"
+              />
             </div>
             <div className="flex justify-end space-x-2">
               {modalData.id && (
