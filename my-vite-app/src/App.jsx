@@ -412,7 +412,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
 
                         {/* 중앙: 캘린더 */}
                         <div className="flex-1">
-                            <DashboardCalendar userName={user.firebaseUid} />
+                            <DashboardCalendar userId={user.id} />
                         </div>
 
                         {/* 오른쪽: 지원 기능 */}
@@ -1627,7 +1627,7 @@ function App() {
       const data = await apiLogin(username, password);
 
       // 2️⃣ Firebase Authentication 로그인
-      const email = "장성우@320.com";
+      const email = `${username}@320.com`;
       let firebaseUid = null;
 
       try {
