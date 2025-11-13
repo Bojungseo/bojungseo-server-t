@@ -79,11 +79,6 @@ function DashboardCalendar() {
 
     const colorToSave = customColor || modalData.color;
 
-    if (!modalData.title) {
-      alert("제목을 입력해주세요.");
-      return;
-    }
-
     try {
       if (modalData.id) {
         await updateDoc(doc(db, "events", modalData.id), {
@@ -169,11 +164,10 @@ function DashboardCalendar() {
         eventDrop={handleEventDrop}
       />
 
-      {/* 모달 */}
       {modalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4 overflow-auto">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl h-full max-h-[90vh] overflow-auto">
-            <h2 className="text-xl font-bold mb-4">{modalData.id ? "이벤트 수정" : "새 이벤트"}</h2>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
+            <h2 className="text-lg font-bold mb-3">{modalData.id ? "이벤트 수정" : "새 이벤트"}</h2>
             <input
               type="text"
               placeholder="제목"
@@ -185,7 +179,7 @@ function DashboardCalendar() {
               placeholder="내용"
               value={modalData.content}
               onChange={(e) => setModalData({ ...modalData, content: e.target.value })}
-              className="w-full border p-3 mb-3 rounded text-lg min-h-[120px]"
+              className="w-full border p-3 mb-3 rounded text-lg h-[200px] resize-y"
             />
             <div className="mb-3">
               <span className="mr-2 font-semibold">색상 선택:</span>
@@ -193,7 +187,7 @@ function DashboardCalendar() {
                 <button
                   key={c}
                   style={{ backgroundColor: c }}
-                  className={`w-8 h-8 rounded-full mr-2 border-2 ${
+                  className={`w-6 h-6 rounded-full mr-1 border-2 ${
                     modalData.color === c ? "border-black" : "border-gray-300"
                   }`}
                   onClick={() => {
@@ -203,33 +197,33 @@ function DashboardCalendar() {
                 />
               ))}
             </div>
-            <div className="mb-3 flex items-center">
+            <div className="mb-3">
               <span className="mr-2 font-semibold">커스텀 색상:</span>
               <input
                 type="color"
                 value={customColor}
                 onChange={(e) => setCustomColor(e.target.value)}
-                className="w-16 h-10 p-0 border rounded"
+                className="w-16 h-8 p-0 border rounded"
               />
             </div>
-            <div className="flex justify-end space-x-3 mt-4">
+            <div className="flex justify-end space-x-2">
               {modalData.id && (
                 <button
                   onClick={handleDelete}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-lg"
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                 >
                   삭제
                 </button>
               )}
               <button
                 onClick={() => setModalOpen(false)}
-                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 text-lg"
+                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
               >
                 취소
               </button>
               <button
                 onClick={handleSave}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-lg"
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               >
                 저장
               </button>
