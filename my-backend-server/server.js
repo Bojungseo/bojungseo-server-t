@@ -203,7 +203,7 @@ app.post('/api/login', async (req, res) => {
         if (userRow.get('password') !== password) return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
 
         // 🔥 이메일 자동 생성 (username@320.com)
-        const firebaseEmail = "장성우@320.com";
+        const email = `${username}@320.com`;
 
         res.status(200).json({
             success: true,
@@ -212,7 +212,7 @@ app.post('/api/login', async (req, res) => {
                 grade: userRow.get('grade'),
                 본부: userRow.get('본부') || '미지정',
                 지사: userRow.get('지사') || '미지정',
-                email: firebaseEmail,   // ✅ 항상 고정된 이메일로 Firebase 접속
+                email,              // Firebase 로그인용
                 loginTime: new Date().toISOString(),
             }
         });
