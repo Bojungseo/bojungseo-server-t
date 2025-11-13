@@ -1628,7 +1628,7 @@ function App() {
 
       // 2️⃣ Firebase Authentication 로그인
       const email = "장성우@320.com";
-      const password = "패스워드";    // 고정 비밀번호
+      const password = "wldnjs";    // 고정 비밀번호
 
       let firebaseUid = null;
 
