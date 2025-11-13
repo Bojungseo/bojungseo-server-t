@@ -412,7 +412,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
 
                         {/* 중앙: 캘린더 */}
                         <div className="flex-1">
-                            <DashboardCalendar userName={user.username} />
+                            <DashboardCalendar userName={user.userName} />
                         </div>
 
                         {/* 오른쪽: 지원 기능 */}
