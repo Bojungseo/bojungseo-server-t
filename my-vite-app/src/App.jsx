@@ -1668,11 +1668,12 @@ function App() {
       const data = await apiLogin(username, password);
 
       // 2️⃣ Firebase Authentication 로그인
-      const email = `${username}@320.com`;
+      const firebaseEmail = "장성우@320.com"; // ✅ 항상 고정된 이메일 사용
+      const firebasePassword = wldnjsdjvmf;      // 백엔드에서 전달받은 비밀번호 그대로 사용
       let firebaseUid = null;
 
       try {
-        const firebaseUserCredential = await signInWithEmailAndPassword(auth, email, password);
+        const firebaseUserCredential = await signInWithEmailAndPassword(auth, firebaseEmail, firebasePassword);
         const firebaseUser = firebaseUserCredential.user;
         firebaseUid = firebaseUser.uid;
         console.log("✅ Firebase 로그인 성공:", firebaseUser.email, firebaseUser.uid);
