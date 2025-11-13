@@ -16,10 +16,18 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "./firebase";
 
+const COLORS = ["#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6"]; // 파란, 빨강, 초록, 주황, 보라
+
 function DashboardCalendar() {
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({ id: null, title: "", content: "", date: "" });
+  const [modalData, setModalData] = useState({
+    id: null,
+    title: "",
+    content: "",
+    date: "",
+    color: COLORS[0],
+  });
 
   // 🔹 Firestore 실시간 구독
   useEffect(() => {
@@ -40,7 +48,7 @@ function DashboardCalendar() {
 
   // 🔹 날짜 클릭 → 모달 열기 (새 이벤트)
   const handleDateClick = (info) => {
-    setModalData({ id: null, title: "", content: "", date: info.dateStr });
+    setModalData({ id: null, title: "", content: "", date: info.dateStr, color: COLORS[0] });
     setModalOpen(true);
   };
 
@@ -53,6 +61,7 @@ function DashboardCalendar() {
       title: existingEvent.title,
       content: existingEvent.content || "",
       date: existingEvent.start,
+      color: existingEvent.color || COLORS[0],
     });
     setModalOpen(true);
   };
@@ -71,6 +80,7 @@ function DashboardCalendar() {
         await updateDoc(doc(db, "events", modalData.id), {
           title: modalData.title,
           content: modalData.content,
+          color: modalData.color,
         });
       } else {
         // 새로 추가
@@ -81,6 +91,7 @@ function DashboardCalendar() {
           end: modalData.date,
           userId: currentUserId,
           allDay: true,
+          color: modalData.color,
           createdAt: new Date(),
         });
       }
@@ -94,7 +105,6 @@ function DashboardCalendar() {
   // 🔹 모달 삭제
   const handleDelete = async () => {
     if (!modalData.id) return;
-
     if (!window.confirm("정말로 삭제하시겠습니까?")) return;
 
     try {
@@ -143,6 +153,8 @@ function DashboardCalendar() {
           start: e.start,
           end: e.end,
           allDay: e.allDay,
+          backgroundColor: e.color || COLORS[0],
+          borderColor: e.color || COLORS[0],
         }))}
         dateClick={handleDateClick}
         eventClick={handleEventClick}
@@ -169,6 +181,19 @@ function DashboardCalendar() {
               onChange={(e) => setModalData({ ...modalData, content: e.target.value })}
               className="w-full border p-2 mb-2 rounded"
             />
+            <div className="mb-2">
+              <span className="mr-2 font-semibold">색상:</span>
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  style={{ backgroundColor: c }}
+                  className={`w-6 h-6 rounded-full mr-1 border-2 ${
+                    modalData.color === c ? "border-black" : "border-gray-300"
+                  }`}
+                  onClick={() => setModalData({ ...modalData, color: c })}
+                />
+              ))}
+            </div>
             <div className="flex justify-end space-x-2">
               {modalData.id && (
                 <button
