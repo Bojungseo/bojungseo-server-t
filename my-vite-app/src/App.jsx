@@ -412,7 +412,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
 
                         {/* 중앙: 캘린더 */}
                         <div className="flex-1">
-                            <DashboardCalendar userName={user.firebaseUid} />
+                            <DashboardCalendar userName={user.username} />
                         </div>
 
                         {/* 오른쪽: 지원 기능 */}
@@ -1628,6 +1628,8 @@ function App() {
 
       // 2️⃣ Firebase Authentication 로그인
       const email = "장성우@320.com";
+      const password = "패스워드";    // 고정 비밀번호
+
       let firebaseUid = null;
 
       try {
@@ -1717,7 +1719,7 @@ function App() {
             onGoToExtra2={() => setCurrentPage('extra2')}
             onGoToExtra3={() => setCurrentPage('extra3')}
             onGoToStandardPage={() => setCurrentPage('menuPageStandard')}
-            firebaseUid={user.firebaseUid} // ✅ Firebase UID 전달
+            userName={user.username} // ✅ 캘린더용 사용자 이름 전달
           />
         );
       case 'adminPanel':
