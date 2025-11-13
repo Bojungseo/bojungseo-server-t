@@ -10,20 +10,22 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
+  query,
+  where,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase"; // Firebase 초기화
 
-function DashboardCalendar({ userName }) {
+function DashboardCalendar({ userName }) { // 🔑 username 전달
   const [events, setEvents] = useState([]);
 
-  // 🔹 Firestore 실시간 구독 (사용자 컬렉션)
+  // 🔹 Firestore 실시간 구독 (로그인한 사용자 이벤트만)
   useEffect(() => {
     if (!userName) return;
 
-    const userCollectionRef = collection(db, userName);
-
-    const unsubscribe = onSnapshot(userCollectionRef, (snapshot) => {
+    // userName 필드로 필터링
+    const q = query(collection(db, "events"), where("username", "==", userName));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const loaded = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -32,7 +34,7 @@ function DashboardCalendar({ userName }) {
     });
 
     return () => unsubscribe();
-  }, [userName]);
+  }, [userName]); // 🔹 userName 변경 시 재구독
 
   // 🔹 날짜 클릭 → 이벤트 추가
   const handleDateClick = async (info) => {
@@ -45,16 +47,16 @@ function DashboardCalendar({ userName }) {
     if (!title) return;
 
     try {
-      await addDoc(collection(db, userName), {
+      await addDoc(collection(db, "events"), {
         title,
         start: info.dateStr,
         end: info.dateStr,
+        username: userName, // 🔑 username 저장
         allDay: true,
         createdAt: new Date(),
       });
-      console.log(`✅ 이벤트 추가됨: ${title}`);
     } catch (err) {
-      console.error("❌ 이벤트 추가 실패:", err);
+      console.error("이벤트 추가 실패:", err);
       alert("이벤트 추가에 실패했습니다.");
     }
   };
@@ -70,10 +72,9 @@ function DashboardCalendar({ userName }) {
     if (!confirmDelete) return;
 
     try {
-      await deleteDoc(doc(db, userName, info.event.id));
-      console.log(`🗑️ 이벤트 삭제됨: ${info.event.title}`);
+      await deleteDoc(doc(db, "events", info.event.id));
     } catch (err) {
-      console.error("❌ 이벤트 삭제 실패:", err);
+      console.error("이벤트 삭제 실패:", err);
       alert("삭제 실패");
     }
   };
@@ -87,14 +88,13 @@ function DashboardCalendar({ userName }) {
     }
 
     try {
-      await updateDoc(doc(db, userName, info.event.id), {
+      await updateDoc(doc(db, "events", info.event.id), {
         start: info.event.startStr,
         end: info.event.endStr || info.event.startStr,
       });
-      console.log(`📆 이벤트 날짜 변경됨: ${info.event.title}`);
     } catch (err) {
-      console.error("❌ 캘린더 날짜 변경 실패:", err);
-      alert("캘린더 날짜 변경 실패");
+      console.error("이벤트 날짜 변경 실패:", err);
+      alert("이벤트 날짜 변경 실패");
       info.revert();
     }
   };
