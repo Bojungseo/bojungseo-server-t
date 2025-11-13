@@ -12,17 +12,32 @@ import {
   doc,
   query,
   where,
-  updateDoc,
 } from "firebase/firestore";
-import { db, auth } from "./firebase"; // Firebase 초기화
+import { db } from "./firebase";
+import { auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 function DashboardCalendar() {
   const [events, setEvents] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
-  // 🔹 Firestore 실시간 구독 (로그인한 사용자 이벤트만)
+  // ✅ 현재 로그인된 Firebase 사용자 감시
   useEffect(() => {
-    const currentUserId = auth.currentUser?.uid;
-    if (!currentUserId) return;
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUserId(user.uid);
+        console.log("현재 로그인된 Firebase UID:", user.uid);
+      } else {
+        setCurrentUserId(null);
+        console.log("Firebase 로그아웃 상태");
+      }
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  // ✅ Firestore에서 현재 사용자 데이터 실시간 구독
+  useEffect(() => {
+    if (!currentUserId) return; // 로그인 안 되어있으면 실행 X
 
     const q = query(collection(db, "events"), where("userId", "==", currentUserId));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -34,11 +49,10 @@ function DashboardCalendar() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [currentUserId]);
 
-  // 🔹 날짜 클릭 → 이벤트 추가
+  // ✅ 날짜 클릭 → 새 이벤트 추가
   const handleDateClick = async (info) => {
-    const currentUserId = auth.currentUser?.uid;
     if (!currentUserId) {
       alert("로그인이 필요합니다.");
       return;
@@ -47,63 +61,30 @@ function DashboardCalendar() {
     const title = prompt("이벤트 제목을 입력하세요:");
     if (!title) return;
 
-    try {
-      await addDoc(collection(db, "events"), {
-        title,
-        start: info.dateStr,
-        end: info.dateStr,
-        userId: currentUserId,
-        allDay: true,
-        createdAt: new Date(),
-      });
-    } catch (err) {
-      console.error("이벤트 추가 실패:", err);
-      alert("이벤트 추가에 실패했습니다.");
-    }
+    await addDoc(collection(db, "events"), {
+      title,
+      start: info.dateStr,
+      end: info.dateStr,
+      userId: currentUserId, // 🔥 로그인한 사용자 UID 저장
+      allDay: true,
+    });
   };
 
-  // 🔹 이벤트 클릭 → 삭제
+  // ✅ 이벤트 클릭 → 삭제
   const handleEventClick = async (info) => {
-    const currentUserId = auth.currentUser?.uid;
     if (!currentUserId) {
       alert("로그인이 필요합니다.");
       return;
     }
 
-    const confirmDelete = window.confirm(`"${info.event.title}" 이벤트를 삭제하시겠습니까?`);
-    if (!confirmDelete) return;
-
-    try {
+    if (window.confirm(`"${info.event.title}" 이벤트를 삭제하시겠습니까?`)) {
       await deleteDoc(doc(db, "events", info.event.id));
-    } catch (err) {
-      console.error("이벤트 삭제 실패:", err);
-      alert("삭제 실패");
-    }
-  };
-
-  // 🔹 드래그 앤 드롭 → 날짜 변경
-  const handleEventDrop = async (info) => {
-    const currentUserId = auth.currentUser?.uid;
-    if (!currentUserId) {
-      alert("로그인이 필요합니다.");
-      info.revert();
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, "events", info.event.id), {
-        start: info.event.startStr,
-        end: info.event.endStr || info.event.startStr,
-      });
-    } catch (err) {
-      console.error("이벤트 날짜 변경 실패:", err);
-      alert("이벤트 날짜 변경 실패");
-      info.revert();
     }
   };
 
   return (
-    <div className="bg-white p-4 rounded shadow">
+    <div className="bg-white/60 backdrop-blur-md p-4 rounded-xl shadow-md">
+      <h2 className="text-lg font-semibold mb-2 text-gray-700">📅 나의 일정</h2>
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
@@ -123,7 +104,6 @@ function DashboardCalendar() {
         eventClick={handleEventClick}
         editable={true}
         selectable={true}
-        eventDrop={handleEventDrop} // 드래그 앤 드롭 처리
       />
     </div>
   );
