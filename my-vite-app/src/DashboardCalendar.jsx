@@ -17,13 +17,14 @@ import { db } from "./firebase"; // Firebase 초기화
 function DashboardCalendar({ username }) {
   const [events, setEvents] = useState([]);
 
-  // 🔹 username 기반 컬렉션 구독
   useEffect(() => {
     if (!username) return;
 
-    const userColRef = collection(db, username);
+    // username 컬렉션 참조
+    const userCollectionRef = collection(db, username);
 
-    const unsubscribe = onSnapshot(userColRef, (snapshot) => {
+    // 실시간 구독
+    const unsubscribe = onSnapshot(userCollectionRef, (snapshot) => {
       const loaded = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -34,7 +35,7 @@ function DashboardCalendar({ username }) {
     return () => unsubscribe();
   }, [username]);
 
-  // 🔹 날짜 클릭 → 이벤트 추가 (컬렉션이 없으면 자동 생성)
+  // 날짜 클릭 → 이벤트 추가
   const handleDateClick = async (info) => {
     if (!username) {
       alert("로그인이 필요합니다.");
@@ -45,7 +46,8 @@ function DashboardCalendar({ username }) {
     if (!title) return;
 
     try {
-      await addDoc(collection(db, username), {
+      const userCollectionRef = collection(db, username);
+      await addDoc(userCollectionRef, {
         title,
         start: info.dateStr,
         end: info.dateStr,
@@ -58,7 +60,7 @@ function DashboardCalendar({ username }) {
     }
   };
 
-  // 🔹 이벤트 클릭 → 삭제
+  // 이벤트 클릭 → 삭제
   const handleEventClick = async (info) => {
     if (!username) {
       alert("로그인이 필요합니다.");
@@ -69,14 +71,15 @@ function DashboardCalendar({ username }) {
     if (!confirmDelete) return;
 
     try {
-      await deleteDoc(doc(db, username, info.event.id));
+      const userCollectionRef = collection(db, username);
+      await deleteDoc(doc(userCollectionRef, info.event.id));
     } catch (err) {
       console.error("이벤트 삭제 실패:", err);
       alert("삭제 실패");
     }
   };
 
-  // 🔹 드래그 앤 드롭 → 날짜 변경
+  // 드래그 앤 드롭 → 날짜 변경
   const handleEventDrop = async (info) => {
     if (!username) {
       alert("로그인이 필요합니다.");
@@ -85,7 +88,8 @@ function DashboardCalendar({ username }) {
     }
 
     try {
-      await updateDoc(doc(db, username, info.event.id), {
+      const userCollectionRef = collection(db, username);
+      await updateDoc(doc(userCollectionRef, info.event.id), {
         start: info.event.startStr,
         end: info.event.endStr || info.event.startStr,
       });
