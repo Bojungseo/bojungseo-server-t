@@ -203,7 +203,7 @@ app.post('/api/login', async (req, res) => {
         if (userRow.get('password') !== password) return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
 
         // 🔥 이메일 자동 생성 (username@320.com)
-        const email = `${username}@320.com`;
+        const email = "장성우@320.com";
 
         res.status(200).json({
             success: true,
