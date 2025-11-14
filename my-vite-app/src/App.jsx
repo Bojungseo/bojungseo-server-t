@@ -896,7 +896,7 @@ function MenuPage1({ onGoToDashboard }) {
 }
 
 
-// --- MenuPage2 (조건 검색 2 - 안정화 버전) ---
+// --- MenuPage2 (조건 검색 2 - 신규 DB 연결) ---
 function MenuPage2({ onGoToDashboard }) {
     const [keyword, setKeyword] = useState('');
     const [secondaryKeyword, setSecondaryKeyword] = useState(''); 
@@ -908,6 +908,7 @@ function MenuPage2({ onGoToDashboard }) {
     
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [searched, setSearched] = useState(false);
     const [filtersEnabled, setFiltersEnabled] = useState(false);
     const [insuranceCompanies, setInsuranceCompanies] = useState([]); 
     const [selectedInsurance, setSelectedInsurance] = useState('전체'); 
@@ -923,33 +924,33 @@ function MenuPage2({ onGoToDashboard }) {
         setFiltersEnabled(false);
         setSecondaryKeyword('');
         setSelectedInsurance('전체');
-
         try {
-            const data = await apiSearchPatients2({ keyword }); // 2번 API 호출
+            const data = await apiSearchPatients2({ keyword }); // 👈 2번 API 사용
             
-            // 1차 검색 시 체크박스 필터 적용
-            let initialFiltered = [...data];
+            // 1차 검색 시 체크박스 필터링을 여기서 적용하여 baseResults를 확정
+            let initialFiltered = data;
 
-            // 입원유무 필터
+            // 입원유무 필터 적용
             if (isHospitalized) {
                 initialFiltered = initialFiltered.filter(p => p.입원유무 && p.입원유무.includes('예'));
-            } else if (!isHospitalized && isHospitalized !== null) {
+            } else {
                 initialFiltered = initialFiltered.filter(p => p.입원유무 && p.입원유무.includes('아니오'));
             }
 
-            // 수술유무 필터
+            // 수술유무 필터 적용
             if (hadSurgery) {
                 initialFiltered = initialFiltered.filter(p => p.수술유무 && p.수술유무.includes('예'));
-            } else if (!hadSurgery && hadSurgery !== null) {
+            } else {
                 initialFiltered = initialFiltered.filter(p => p.수술유무 && p.수술유무.includes('아니오'));
             }
-
+            
             setBaseResults(initialFiltered);
             setDisplayResults(initialFiltered);
             setFiltersEnabled(true);
-
-            // 보험회사 목록 생성
-            const uniqueCompanies = ['전체', ...new Set(initialFiltered.map(p => p.보험회사).filter(Boolean))];
+            setIsHospitalized(false);
+            setHadSurgery(false);
+            
+            const uniqueCompanies = ['전체', ...new Set(data.map(p => p.보험회사).filter(Boolean))];
             setInsuranceCompanies(uniqueCompanies);
 
         } catch (err) {
@@ -960,13 +961,14 @@ function MenuPage2({ onGoToDashboard }) {
             setLoading(false);
         }
     };
-
+    
     const handleReset = () => {
         setKeyword('');
         setSecondaryKeyword('');
         setBaseResults([]);
         setDisplayResults([]);
         setFiltersEnabled(false);
+        setSearched(false);
         setError('');
         setIsHospitalized(false);
         setHadSurgery(false);
@@ -983,39 +985,35 @@ function MenuPage2({ onGoToDashboard }) {
         }
     }
 
-    // 2차 필터링
     useEffect(() => {
         if (!filtersEnabled || baseResults.length === 0) return;
 
         let filtered = [...baseResults];
 
-        // 입원유무 필터
         if (isHospitalized) {
             filtered = filtered.filter(p => p.입원유무 && p.입원유무.includes('예'));
         } else {
-            filtered = filtered.filter(p => p.입원유무 && p.입원유무.includes('아니오'));
+             filtered = filtered.filter(p => p.입원유무 && p.입원유무.includes('아니오'));
         }
 
-        // 수술유무 필터
         if (hadSurgery) {
             filtered = filtered.filter(p => p.수술유무 && p.수술유무.includes('예'));
         } else {
             filtered = filtered.filter(p => p.수술유무 && p.수술유무.includes('아니오'));
         }
-
-        // 2차 키워드 필터
+        
         if (secondaryKeyword.trim()) {
             const secondaryKwd = secondaryKeyword.trim().toLowerCase();
             filtered = filtered.filter(p => p.병명 && p.병명.toLowerCase().includes(secondaryKwd));
         }
 
-        // 보험회사 필터
         if (selectedInsurance !== '전체') {
             filtered = filtered.filter(p => p.보험회사 === selectedInsurance);
         }
+        
+        setDisplayResults(filtered);
 
-        setDisplayResults([...filtered]);
-    }, [baseResults, filtersEnabled, secondaryKeyword, selectedInsurance, isHospitalized, hadSurgery]);
+    }, [isHospitalized, hadSurgery, baseResults, filtersEnabled, secondaryKeyword, selectedInsurance]); 
 
     return (
         <div className="p-8 min-h-screen bg-gray-50">
@@ -1024,11 +1022,12 @@ function MenuPage2({ onGoToDashboard }) {
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold">예외질환 검색(건강고지)</h1>
                         <button onClick={onGoToDashboard} className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                            대시보드로 돌아가기
+                            홈으로 가기
                         </button>
                     </div>
 
                     <form onSubmit={handleFormSubmit} className="p-4 bg-gray-100 rounded-lg flex flex-col gap-4 border">
+                        {/* 1차 검색 칸과 버튼 */}
                         <div className="flex flex-col md:flex-row items-center gap-4">
                             <input 
                                 type="text"
@@ -1038,13 +1037,14 @@ function MenuPage2({ onGoToDashboard }) {
                                 disabled={filtersEnabled || loading}
                                 className={`flex-grow px-3 py-2 border rounded-md ${filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
                             />
+                            {/* 체크박스 영역 */}
                             <div className="flex items-center gap-4 mt-2 md:mt-0">
                                 <label className={`flex items-center gap-2 ${filtersEnabled ? 'cursor-not-allowed text-gray-400' : 'cursor-pointer'}`}>
                                     <input 
                                         type="checkbox"
                                         checked={isHospitalized}
                                         onChange={(e) => setIsHospitalized(e.target.checked)}
-                                        disabled={loading}
+                                        disabled={filtersEnabled}
                                         className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 disabled:bg-gray-200"
                                     />
                                     입원유무
@@ -1054,7 +1054,7 @@ function MenuPage2({ onGoToDashboard }) {
                                         type="checkbox"
                                         checked={hadSurgery}
                                         onChange={(e) => setHadSurgery(e.target.checked)}
-                                        disabled={loading}
+                                        disabled={filtersEnabled}
                                         className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 disabled:bg-gray-200"
                                     />
                                     수술유무
@@ -1072,8 +1072,11 @@ function MenuPage2({ onGoToDashboard }) {
                                 {filtersEnabled ? '초기화' : (loading ? '검색 중...' : '검색')}
                             </button>
                         </div>
-
+                        
+                        {/* 2차 재검색 및 체크박스/드롭다운 필터 영역 */}
                         <div className="p-4 bg-white rounded-md flex flex-col md:flex-row items-center gap-4 border border-dashed border-gray-300">
+                            
+                            {/* 보험회사 드롭다운 */}
                             <select 
                                 value={selectedInsurance}
                                 onChange={(e) => setSelectedInsurance(e.target.value)}
@@ -1085,6 +1088,7 @@ function MenuPage2({ onGoToDashboard }) {
                                 ))}
                             </select>
 
+                            {/* 2차 재검색 입력 칸 */}
                             <input 
                                 type="text"
                                 value={secondaryKeyword}
@@ -1105,6 +1109,7 @@ function MenuPage2({ onGoToDashboard }) {
                         </div>
                         {error && <p className="text-center text-red-500 p-4">{error}</p>}
                         
+                        {/* ✨ 검색 결과 테이블 렌더링 영역 */}
                         <div className="overflow-x-auto border rounded-lg">
                             <table className="min-w-full bg-white">
                                 <thead className="bg-gray-200">
@@ -1147,7 +1152,6 @@ function MenuPage2({ onGoToDashboard }) {
         </div>
     );
 }
-
 
 
 // --- MenuPage3 (설정 페이지) ---
