@@ -412,11 +412,11 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
 
                         {/* 중앙: 캘린더 */}
                         <div
-                          className="flex-1"
+                          className="flex-1 flex flex-col rounded shadow bg-white overflow-hidden"
                           style={{
-                            height: "calc(100vh - 250px)", // 화면 높이에 따라 자동 줄어듦
-                            minHeight: "400px",            // 너무 작아지지 않도록 최소 보장
-                            overflow: "auto",              // 내부 스크롤
+                            minHeight: "400px",   // 최소 높이
+                            maxHeight: "calc(100vh - 250px)", // 화면 전체 높이에서 상단 타이틀 등 제외
+                            height: "auto",       // 내용에 맞춰 늘어나도록
                           }}
                         >
                           <DashboardCalendar userId={user.id} />
