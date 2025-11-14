@@ -176,48 +176,56 @@ function DashboardCalendar() {
         </button>
       </div>
 
-      {/* 🔥 FullCalendar */}
-      <FullCalendar
-        plugins={[dayGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        editable={true}
-        selectable={true}
-        eventClick={handleEventClick}
-        eventDrop={handleEventDrop}
-        events={events.map((e) => ({
-          id: e.id,
-          title: e.title,
-          start: e.start,
-          end: e.end,
-          backgroundColor: e.color,
-          borderColor: e.color,
-          allDay: true,
-        }))}
-
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "" // ✨ 버튼 제거
+      {/* 🔥 FullCalendar (크기 조절 적용) */}
+      <div
+        className="w-full rounded shadow bg-white overflow-auto"
+        style={{
+          maxHeight: "650px", // 최대 높이
+          minHeight: "400px", // 최소 높이
         }}
+      >
+        <FullCalendar
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          editable={true}
+          selectable={true}
+          eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
+          events={events.map((e) => ({
+            id: e.id,
+            title: e.title,
+            start: e.start,
+            end: e.end,
+            backgroundColor: e.color,
+            borderColor: e.color,
+            allDay: true,
+          }))}
 
-        titleFormat={(date) => {
-          const y = date.date.year;
-          const m = date.date.month + 1;
-          return `${y}년 ${m}월`;
-        }}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "" // 버튼 제거
+          }}
 
-        dayCellContent={(arg) => {
-          const day = arg.date.getDay();
-          let color = "";
+          titleFormat={(date) => {
+            const y = date.date.year;
+            const m = date.date.month + 1;
+            return `${y}년 ${m}월`;
+          }}
 
-          if (day === 0) color = "red"; // 일요일
-          else if (day === 6) color = "blue"; // 토요일
+          dayCellContent={(arg) => {
+            const day = arg.date.getDay();
+            let color = "";
 
-          return {
-            html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>`
-          };
-        }}
-      />
+            if (day === 0) color = "red"; // 일요일
+            else if (day === 6) color = "blue"; // 토요일
+
+            return {
+              html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>`
+            };
+          }}
+        />
+      </div>
 
       {/* 🔥 모달 */}
       {modalOpen && (
