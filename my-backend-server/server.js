@@ -40,41 +40,72 @@ const standardDoc = new GoogleSpreadsheet(STANDARD_SPREADSHEET_ID, serviceAccoun
 // =================================================================
 let patientCache = []; 
 let patientCache2 = []; 
-let cachedContacts = { sonhae: [], saengmyeong: [] }; // 원수사 연락망 캐싱
-let standardCache = []; // standard 전용 데이터 캐시
+let cachedContacts = { sonhae: [], saengmyeong: [] }; 
+let standardCache = []; 
 
-
-async function loadAndCachePatientData(doc, cacheArray) { 
-    const cacheName = (cacheArray === patientCache) ? '1차 캐시' : '2차 캐시';
-    try {
-        const allPatients = [];
-        if (!doc.title) await doc.loadInfo();
-
-        for (const sheet of doc.sheetsByIndex) {
-            console.log(`  -> "${sheet.title}" 시트 데이터 읽는 중...`);
-            const rows = await sheet.getRows();
-            const sheetData = rows.map(row => ({ 
-                ...row.toObject(), 
-                보험회사: sheet.title, 
-                id: crypto.randomUUID(),
-            }));
-            allPatients.push(...sheetData);
-            console.log(`  ✅ "${sheet.title}" 시트에서 ${sheetData.length}건 캐싱 완료.`);
-        }
-        
-        if (cacheArray === patientCache) {
-             patientCache = allPatients;
-        } else {
-             patientCache2 = allPatients;
-        }
-        
-        console.log(`✅ ${cacheName} 최종 완료. 총 ${allPatients.length}건.`);
-    } catch (error) {
-        console.error(`❌ ${cacheName} 중 심각한 오류 발생:`, error);
-        throw error;
+async function loadPatientsFromDoc(doc, isStandard = false) {
+    const allPatients = [];
+    if (!doc.title) await doc.loadInfo();
+    for (const sheet of doc.sheetsByIndex) {
+        console.log(`  -> "${sheet.title}" 시트 데이터 읽는 중...`);
+        const rows = await sheet.getRows();
+        const sheetData = rows.map(row => {
+            const obj = row.toObject();
+            if (isStandard) {
+                const 병명 = obj.병명 ?? obj['병명(한글)'] ?? obj['disease'] ?? obj['name'] ?? '';
+                const 성별 = (obj.성별 ?? obj.gender ?? '').toString().trim();
+                const 나이Raw = obj.나이 ?? obj.age ?? '';
+                const 나이Parsed = (typeof 나이Raw === 'number') ? Math.floor(나이Raw) :
+                                    (typeof 나이Raw === 'string' && 나이Raw.trim() !== '' && !isNaN(parseInt(나이Raw, 10)))
+                                        ? parseInt(나이Raw, 10)
+                                        : null;
+                const 보험회사 = obj.보험회사 ?? obj.company ?? '';
+                const 상품종류 = obj.상품종류 ?? obj.product ?? '';
+                const 보장내용 = obj.보장내용 ?? obj.coverage ?? '';
+                const 고지내용 = obj.고지내용 ?? obj.notice1 ?? '';
+                const 심사일자 = obj.심사일자 ?? obj.date ?? '';
+                const 심사결과 = obj.심사결과 ?? obj.result1 ?? '';
+                return {
+                    id: crypto.randomUUID(),
+                    원본행: row._rowNumber,
+                    병명,
+                    성별,
+                    나이Raw: (나이Raw === undefined || 나이Raw === null) ? '' : String(나이Raw).trim(),
+                    ageNumeric: 나이Parsed,
+                    보험회사,
+                    상품종류,
+                    보장내용,
+                    고지내용,
+                    심사일자,
+                    심사결과,
+                };
+            } else {
+                return { ...obj, 보험회사: sheet.title, id: crypto.randomUUID() };
+            }
+        });
+        allPatients.push(...sheetData);
+        console.log(`  ✅ "${sheet.title}" 시트에서 ${sheetData.length}건 캐싱 완료.`);
     }
+    return allPatients;
 }
 
+// --- patientCache 초기화 ---
+async function loadAndCachePatient1() {
+    patientCache = await loadPatientsFromDoc(patientDoc);
+    console.log(`✅ patientCache (1차) 캐싱 완료: ${patientCache.length}건`);
+}
+
+// --- patientCache2 초기화 ---
+async function loadAndCachePatient2() {
+    patientCache2 = await loadPatientsFromDoc(patientDoc2);
+    console.log(`✅ patientCache2 (2차) 캐싱 완료: ${patientCache2.length}건`);
+}
+
+// --- standardCache 초기화 ---
+async function loadAndCacheStandard() {
+    standardCache = await loadPatientsFromDoc(standardDoc, true);
+    console.log(`[Standard] 캐싱 완료: ${standardCache.length}건`);
+}
 
 // ✨ 원수사 연락망 캐싱 함수
 async function loadAndCacheContacts() {
@@ -84,9 +115,7 @@ async function loadAndCacheContacts() {
         const rowCount = sheet.rowCount;
         const colCount = sheet.columnCount;
 
-        // 헤더 3행
         await sheet.loadCells({ startRowIndex: 2, endRowIndex: 3, startColumnIndex: 0, endColumnIndex: colCount });
-        // 데이터 4행부터
         await sheet.loadCells({ startRowIndex: 3, endRowIndex: rowCount, startColumnIndex: 0, endColumnIndex: colCount });
 
         const headers = [];
@@ -109,77 +138,13 @@ async function loadAndCacheContacts() {
         const DIVIDE_ROW_INDEX = 32;
         cachedContacts.sonhae = allContacts.slice(0, DIVIDE_ROW_INDEX - 3);
         cachedContacts.saengmyeong = allContacts.slice(DIVIDE_ROW_INDEX - 3);
-        cachedContacts.lastUpdated = new Date().toISOString(); // ✅ 갱신 시각 기록
+        cachedContacts.lastUpdated = new Date().toISOString();
 
         console.log(`[Contacts] 캐싱 완료 (손해: ${cachedContacts.sonhae.length}, 생명: ${cachedContacts.saengmyeong.length})`);
     } catch (err) {
         console.error('[Contacts] 캐싱 중 오류 발생:', err);
     }
 }
-
-// ================================================================
-// ➌ standard 시트: "맨 처음 시트"만 읽어서 캐시하는 함수
-// - 다양한 컬럼명이 존재할 수 있으므로 row.toObject()를 사용하여 유연하게 처리
-// - 나이 컬럼은 숫자로 파싱 가능하면 ageNumeric으로 저장, 아니면 null
-// - id는 crypto.randomUUID()로 부여 (원본 행 번호를 사용하려면 row._rowNumber 사용 가능)
-// ================================================================
-async function loadAndCacheStandard() {
-    try {
-        // 문서 정보가 로드되지 않았다면 로드
-        if (!standardDoc.title) await standardDoc.loadInfo();
-
-        if (!standardDoc.sheetsByIndex || standardDoc.sheetsByIndex.length === 0) {
-            console.warn('[Standard] 시트가 없습니다.');
-            standardCache = [];
-            return;
-        }
-
-        const sheet = standardDoc.sheetsByIndex[0]; // ✅ 맨 처음 시트만 사용
-        console.log(`[Standard] 첫 번째 시트 로딩: "${sheet.title}"`);
-
-        const rows = await sheet.getRows();
-        const mapped = rows.map(row => {
-            const obj = row.toObject();
-
-            // 유연한 필드 추출 (컬럼명이 정확히 일치하지 않아도 최대한 잡아냄)
-            const 병명 = obj.병명 ?? obj['병명(한글)'] ?? obj['disease'] ?? obj['name'] ?? '';
-            const 성별 = (obj.성별 ?? obj.gender ?? '').toString().trim();
-            const 나이Raw = obj.나이 ?? obj.age ?? '';
-            const 나이Parsed = (typeof 나이Raw === 'number') ? Math.floor(나이Raw) :
-                                (typeof 나이Raw === 'string' && 나이Raw.trim() !== '' && !isNaN(parseInt(나이Raw, 10)))
-                                    ? parseInt(나이Raw, 10)
-                                    : null;
-            const 보험회사 = obj.보험회사 ?? obj.company ?? '';
-            const 상품종류 = obj.상품종류 ?? obj.product ?? '';
-            const 보장내용 = obj.보장내용 ?? obj.coverage ?? '';
-            const 고지내용 = obj.고지내용 ?? obj.notice1 ?? '';
-            const 심사일자 = obj.심사일자 ?? obj.date ?? '';
-            const 심사결과 = obj.심사결과 ?? obj.result1 ?? '';
-
-            return {
-                id: crypto.randomUUID(), // 고유 id (원하면 row._rowNumber 사용)
-                원본행: row._rowNumber,
-                병명,
-                성별,
-                나이Raw: (나이Raw === undefined || 나이Raw === null) ? '' : String(나이Raw).trim(),
-                ageNumeric: 나이Parsed, // 숫자로 파싱 가능하면 숫자, 아니면 null
-                보험회사,
-                상품종류,
-                보장내용,
-                고지내용,
-                심사일자,
-                심사결과,
-            };
-        });
-
-        standardCache = mapped;
-        console.log(`[Standard] 캐싱 완료: ${standardCache.length}건`);
-    } catch (err) {
-        console.error('[Standard] 캐싱 중 오류 발생:', err);
-    }
-}
-
-
 
 // =================================================================
 // Express 앱 설정 및 API 라우트
@@ -191,7 +156,7 @@ app.use(express.json());
 const frontendDistPath = path.join(__dirname, './dist');
 app.use(express.static(frontendDistPath));
 
-// --- 1. 로그인 API ---
+// --- 1~8 로그인, 회원가입, 신청, 사용자 관리 API (생략 없이 그대로) ---
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -202,13 +167,12 @@ app.post('/api/login', async (req, res) => {
         if (!userRow) return res.status(404).json({ message: '존재하지 않는 아이디입니다.' });
         if (userRow.get('password') !== password) return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
 
-        // ✅ Firebase 로그인용 고정 이메일
         const firebaseEmail = process.env.FIXED_FIREBASE_EMAIL || "장성우@320.com";
 
         res.status(200).json({
             success: true,
             user: {
-                username: userRow.get('username'),   // 🔑 캘린더 필터용
+                username: userRow.get('username'),
                 grade: userRow.get('grade'),
                 본부: userRow.get('본부') || '미지정',
                 지사: userRow.get('지사') || '미지정',
@@ -222,7 +186,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// --- 2. 회원가입 신청 API ---
 app.post('/api/register', async (req, res) => {
     const { username, password, 본부, 지사 } = req.body;
     try {
@@ -235,7 +198,6 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// --- 3. (관리자) 신청 목록 조회 API ---
 app.get('/api/requests', async (req, res) => {
     try {
         const sheet = authDoc.sheetsByTitle['requests'];
@@ -247,7 +209,6 @@ app.get('/api/requests', async (req, res) => {
     }
 });
 
-// --- 4. (관리자) 신청 승인 API ---
 app.post('/api/approve', async (req, res) => {
     const { requestId } = req.body;
     try {
@@ -273,7 +234,6 @@ app.post('/api/approve', async (req, res) => {
     }
 });
 
-// --- 5. (관리자) 신청 거절 API ---
 app.post('/api/reject', async (req, res) => {
     const { requestId } = req.body;
     try {
@@ -289,7 +249,6 @@ app.post('/api/reject', async (req, res) => {
     }
 });
 
-// --- 6. (관리자) 승인된 사용자 목록 조회 API ---
 app.get('/api/users', async (req, res) => {
     try {
         const sheet = authDoc.sheetsByTitle['users'];
@@ -301,7 +260,6 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-// --- 7. (관리자) 사용자 정보 업데이트 API ---
 app.post('/api/update-user', async (req, res) => {
     const { id, password, grade, 본부, 지사 } = req.body;
     try {
@@ -323,7 +281,6 @@ app.post('/api/update-user', async (req, res) => {
     }
 });
 
-// --- 8. (관리자) 사용자 삭제 API ---
 app.post('/api/delete-user', async (req, res) => {
     const { id } = req.body;
     try {
@@ -380,7 +337,7 @@ app.get('/api/contacts', async (req, res) => {
             success: true,
             sonhae: cachedContacts.sonhae,
             saengmyeong: cachedContacts.saengmyeong,
-            cachedAt: cachedContacts.lastUpdated || new Date().toISOString(), // ✅ 캐시 시각
+            cachedAt: cachedContacts.lastUpdated || new Date().toISOString(),
         });
     } catch (error) {
         console.error('[Backend] 원수사 연락망 조회 오류:', error);
@@ -398,7 +355,6 @@ app.get('/api/search-standard', async (req, res) => {
 
     try {
         if (!standardCache || standardCache.length === 0) {
-            // 캐시가 비어있을 경우 한 번 로드 시도 (안전장치)
             await loadAndCacheStandard();
         }
 
@@ -412,8 +368,6 @@ app.get('/api/search-standard', async (req, res) => {
         res.status(500).json({ success: false, message: '표준 시트 검색 중 오류가 발생했습니다.' });
     }
 });
-
-
 
 // ✅ 모든 API 라우트 이후에 위치해야 함
 app.use((req, res, next) => {
@@ -440,19 +394,19 @@ async function startServer() {
         console.log(`✅ 환자 1차 DB 시트 "${patientDoc.title}"에 연결되었습니다.`);
         console.log(`✅ 환자 2차 DB 시트 "${patientDoc2.title}"에 연결되었습니다.`);
         console.log(`✅ 원수사 연락망 시트 "${contactDoc.title}"에 연결되었습니다.`);
-        console.log(`✅ 질병인수데이터 DB 시트 "${standardDoc.title}" 연결됨.`); // ✅ 추가
+        console.log(`✅ 질병인수데이터 DB 시트 "${standardDoc.title}" 연결됨.`);
 
-      
         const memoryBefore = process.memoryUsage().heapUsed;
         console.log(`\n[Memory] 캐싱 전 힙(Heap) 메모리 사용량: ${formatBytes(memoryBefore)}`);
 
-        await loadAndCachePatientData(patientDoc, patientCache);
-        await loadAndCachePatientData(patientDoc2, patientCache2);
-        await loadAndCachePatientData(standardDoc, standardCache);
-        await loadAndCacheContacts(); // 초기 연락망 캐싱
+        await loadAndCachePatient1();
+        await loadAndCachePatient2();
+        await loadAndCacheStandard();
+        await loadAndCacheContacts();
+
         setInterval(loadAndCacheContacts, 180000); // 3분마다 연락망 갱신
-        setInterval(loadAndCacheStandard, 600000);  // 3분마다 standard 캐시 갱신
-      
+        setInterval(loadAndCacheStandard, 600000); // 10분마다 standard 캐시 갱신
+
         const memoryAfter = process.memoryUsage().heapUsed;
         console.log(`[Memory] 캐싱 후 힙(Heap) 메모리 사용량: ${formatBytes(memoryAfter)}`);
 
