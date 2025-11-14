@@ -271,180 +271,188 @@ function SuccessModal({ onClose }) {
 
 
 // --- DashboardPage 컴포넌트 (변경 없음) ---
-function DashboardPage({
-  user,
-  onLogout,
-  onGoToAdminPanel,
-  onGoToMenuPage1,
-  onGoToMenuPage2,
-  onGoToSettings,
-  onGoToExtra1,
-  onGoToExtra2,
-  onGoToExtra3,
-  onGoToStandardPage
-}) {
-  const [remainingTime, setRemainingTime] = useState(0);
+function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGoToMenuPage2, onGoToSettings, onGoToExtra1, onGoToExtra2, onGoToExtra3, onGoToStandardPage }) {
+    const [remainingTime, setRemainingTime] = useState(0);
 
-  useEffect(() => {
-    const savedItem = localStorage.getItem('loggedInUser');
-    if (!savedItem) {
-      onLogout();
-      return;
-    }
-    const { expiry } = JSON.parse(savedItem);
+    useEffect(() => {
+        const savedItem = localStorage.getItem('loggedInUser');
+        if (!savedItem) {
+            onLogout();
+            return;
+        }
+        const { expiry } = JSON.parse(savedItem);
+        
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const timeDiff = expiry - now;
+            
+            if (timeDiff <= 0) {
+                setRemainingTime(0);
+                clearInterval(intervalId);
+                onLogout();
+                return;
+            }
 
-    const updateTimer = () => {
-      const now = new Date().getTime();
-      const timeDiff = expiry - now;
+            setRemainingTime(Math.floor(timeDiff / 1000));
+        };
 
-      if (timeDiff <= 0) {
-        setRemainingTime(0);
-        clearInterval(intervalId);
-        onLogout();
-        return;
-      }
+        const intervalId = setInterval(updateTimer, 1000);
+        updateTimer();
 
-      setRemainingTime(Math.floor(timeDiff / 1000));
+        return () => clearInterval(intervalId);
+    }, [onLogout]);
+
+    const formatTime = (totalSeconds) => {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
     };
 
-    const intervalId = setInterval(updateTimer, 1000);
-    updateTimer();
-
-    return () => clearInterval(intervalId);
-  }, [onLogout]);
-
-  const formatTime = (totalSeconds) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
-  };
-
-  const UserInfoCard = () => (
-    <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full">
-      <h2 className="text-xl font-bold mb-3 border-b pb-2">사용자 정보</h2>
-      <div className="flex flex-col space-y-3">
-        <div className="p-1 border-b border-gray-100">
-          <p className="text-xs text-gray-500">아이디</p>
-          <p className="font-semibold text-base text-blue-600">{user.username}</p>
+    // 사용자 정보 카드
+    const UserInfoCard = () => (
+        <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full">
+            <h2 className="text-xl font-bold mb-3 border-b pb-2">사용자 정보</h2>
+            <div className="flex flex-col space-y-3">
+                <div className="p-1 border-b border-gray-100">
+                    <p className="text-xs text-gray-500">아이디</p>
+                    <p className="font-semibold text-base text-blue-600">{user.username}</p>
+                </div>
+                <div className="p-1 border-b border-gray-100">
+                    <p className="text-xs text-gray-500">본부</p>
+                    <p className="text-base font-semibold text-indigo-600">{user.본부 || '미지정'}</p>
+                </div>
+                <div className="p-1 border-b border-gray-100">
+                    <p className="text-xs text-gray-500">지사</p>
+                    <p className="text-base font-semibold text-green-600">{user.지사 || '미지정'}</p>
+                </div>
+                <div className="p-1">
+                    <p className="text-xs text-gray-500">남은 시간</p>
+                    <p className="text-base font-semibold text-yellow-600">{formatTime(remainingTime)}</p>
+                </div>
+            </div>
         </div>
-        <div className="p-1 border-b border-gray-100">
-          <p className="text-xs text-gray-500">본부</p>
-          <p className="text-base font-semibold text-indigo-600">{user.본부 || '미지정'}</p>
-        </div>
-        <div className="p-1 border-b border-gray-100">
-          <p className="text-xs text-gray-500">지사</p>
-          <p className="text-base font-semibold text-green-600">{user.지사 || '미지정'}</p>
-        </div>
-        <div className="p-1">
-          <p className="text-xs text-gray-500">남은 시간</p>
-          <p className="text-base font-semibold text-yellow-600">{formatTime(remainingTime)}</p>
-        </div>
-      </div>
-    </div>
-  );
+    );
 
-  const QuickLinksVertical = () => {
-    const isManager = user.grade === '최고 관리자';
-    const isRegular2 = user.grade === '일반 회원2';
-    const allButtons = [
-      { label: '예외질환 검색(유병자)', onClick: onGoToMenuPage1 },
-      { label: '예외질환 검색(건강고지)', onClick: onGoToMenuPage2 },
-      { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
-      { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
-      { label: '원수사 연락망', onClick: onGoToExtra2 },
-      { label: '심사데이터 검색', onClick: onGoToExtra3, managerOnly: true },
-    ];
+    // 지원 기능 세로 박스
+    const QuickLinksVertical = () => {
+        const isManager = user.grade === '최고 관리자';
+        const isRegular2 = user.grade === '일반 회원2';
+        const allButtons = [
+            { label: '예외질환 검색(유병자)', onClick: onGoToMenuPage1 },
+            { label: '예외질환 검색(건강고지)', onClick: onGoToMenuPage2 },
+            { label: '예정이율 체크', onClick: onGoToSettings, managerOnly: true },
+            { label: '화재보험산정', onClick: onGoToExtra1, managerOnly: true },
+            { label: '원수사 연락망', onClick: onGoToExtra2 },
+            { label: '심사데이터 검색', onClick: onGoToExtra3, managerOnly: true },
+        ];
+
+        return (
+            <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-64">
+                <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700 text-center">지원기능</h2>
+                <div className="flex flex-col gap-2">
+                    {allButtons.map((button, index) => {
+                        if (button.managerOnly && !(isManager || isRegular2)) return null;
+                        return (
+                            <button
+                                key={index}
+                                onClick={button.onClick}
+                                className="w-full text-center p-2 bg-gray-100/70 hover:bg-blue-100 rounded-md transition-colors text-sm"
+                            >
+                                {button.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
 
     return (
-      <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-64">
-        <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700 text-center">지원기능</h2>
-        <div className="flex flex-col gap-2">
-          {allButtons.map((button, index) => {
-            if (button.managerOnly && !(isManager || isRegular2)) return null;
-            return (
-              <button
-                key={index}
-                onClick={button.onClick}
-                className="w-full text-center p-2 bg-gray-100/70 hover:bg-blue-100 rounded-md transition-colors text-sm"
-              >
-                {button.label}
-              </button>
-            );
-          })}
+        <div className="relative min-h-screen font-Tenada">
+            <div className="absolute top-0 left-0 w-full h-full -z-10"
+                 style={{
+                     backgroundImage: "url('/Dimg.png')",
+                     backgroundSize: 'cover',
+                     backgroundPosition: 'center center',
+                     backgroundRepeat: 'no-repeat',
+                 }}></div>
+
+            <div className="p-4 md:p-8 min-h-screen">
+                <div className="w-full">
+                    {/* 상단 타이틀 + 로그아웃 */}
+                    <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md mb-8">
+                        <div className="flex justify-between items-center">
+                            <h1 className="text-3xl font-bold">설계사 업무지원</h1>
+                            <button
+                                onClick={onLogout}
+                                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                            >
+                                로그아웃
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 사용자 정보 + 캘린더 + 지원 기능 */}
+                    <div className="flex justify-between items-start gap-8 mb-8">
+                        {/* 왼쪽: 사용자 정보 */}
+                        <div className="w-full max-w-sm">
+                            <UserInfoCard />
+                            {user.grade === '최고 관리자' && (
+                                <div className="mt-4 bg-white/50 backdrop-blur-md p-2 rounded-lg shadow-md">
+                                    <button
+                                        onClick={onGoToAdminPanel}
+                                        className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105"
+                                    >
+                                        🛠 관리자패널
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 중앙: 캘린더 */}
+                        <div
+                          className="flex-1"
+                          style={{
+                            height: "calc(100vh - 250px)", // 화면 높이에 따라 자동 줄어듦
+                            minHeight: "400px",            // 너무 작아지지 않도록 최소 보장
+                            overflow: "auto",              // 내부 스크롤
+                          }}
+                        >
+                          <DashboardCalendar userId={user.id} />
+                        </div>
+
+                        {/* 오른쪽: 지원 기능 */}
+                        <div className="flex-shrink-0">
+                            <QuickLinksVertical />
+                        </div>
+                    </div>
+
+                    {/* 공지사항 & 게시판 */}
+                    <div className="flex justify-between items-start gap-8 mb-8">
+                        <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md max-w-sm w-full">
+                            <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
+                            <ul className="space-y-2">
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">필독! 11월 시스템 정기 점검 안내</li>
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">신규 기능 '조건 검색' 사용 가이드</li>
+                                <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">관리자 패널 사용 변경사항 공지</li>
+                            </ul>
+                        </div>
+
+                        <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md w-64">
+                            <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
+                            <ul className="space-y-2">
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">우직하게하면 뭐든 평균은 할 수 있다.</li>
+                                <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">일단해라, 그냥해라, 노력해라</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
         </div>
-      </div>
     );
-  };
-
-  return (
-    <div className="relative min-h-screen font-Tenada p-4 md:p-8">
-      {/* 상단 타이틀 + 로그아웃 */}
-      <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md mb-8 flex justify-between items-center">
-        <h1 className="text-3xl font-bold">설계사 업무지원</h1>
-        <button
-          onClick={onLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-        >
-          로그아웃
-        </button>
-      </div>
-
-      {/* 상단 3열: 사용자정보 | 캘린더 | 지원 기능 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {/* 좌측: 사용자정보 */}
-        <div className="flex flex-col gap-6">
-          <UserInfoCard />
-          {user.grade === '최고 관리자' && (
-            <button
-              onClick={onGoToAdminPanel}
-              className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105"
-            >
-              🛠 관리자패널
-            </button>
-          )}
-        </div>
-
-        {/* 중앙: 캘린더 */}
-        <div className="flex flex-col">
-          <div className="bg-white p-4 rounded shadow w-full max-h-[650px] overflow-auto">
-            <DashboardCalendar userId={user.id} />
-          </div>
-        </div>
-
-        {/* 우측: 지원 기능 */}
-        <div className="flex flex-col gap-6">
-          <QuickLinksVertical />
-        </div>
-      </div>
-
-      {/* 하단 3열: 공지사항 | 캘린더 하단 여백 | 게시판 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 좌측: 공지사항 */}
-        <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
-          <ul className="space-y-2">
-            <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">필독! 11월 시스템 정기 점검 안내</li>
-            <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">신규 기능 '조건 검색' 사용 가이드</li>
-            <li className="p-3 hover:bg-gray-100 cursor-pointer rounded-md">관리자 패널 사용 변경사항 공지</li>
-          </ul>
-        </div>
-
-        {/* 중앙: 빈칸 */}
-        <div></div>
-
-        {/* 우측: 게시판 */}
-        <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판 기능 추가 예정</h2>
-          <ul className="space-y-2">
-            <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
-            <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">우직하게 하면 뭐든 평균은 할 수 있다.</li>
-            <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">일단 해라, 그냥 해라, 노력해라</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 
