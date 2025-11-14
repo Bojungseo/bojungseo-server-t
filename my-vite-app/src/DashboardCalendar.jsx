@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import {
   collection,
@@ -32,24 +31,18 @@ function DashboardCalendar() {
     color: DEFAULT_COLORS[0],
   });
   const [customColor, setCustomColor] = useState("");
-  const [newEventDate, setNewEventDate] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
 
-  // 🔹 Firebase Auth 상태 체크
+  // 🔹 Firebase Auth 체크
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
-      if (user?.uid) {
-        setCurrentUserId(user.uid);
-      } else {
-        setCurrentUserId(null);
-        setEvents([]); // UID 없으면 이벤트 초기화
-      }
+      setCurrentUserId(user?.uid || null);
+      if (!user?.uid) setEvents([]);
     });
-
     return () => unsubscribeAuth();
   }, []);
 
-  // 🔹 Firestore 실시간 구독 (UID 있을 때만)
+  // 🔹 Firestore 구독
   useEffect(() => {
     if (!currentUserId) return;
 
@@ -65,30 +58,38 @@ function DashboardCalendar() {
     return () => unsubscribe();
   }, [currentUserId]);
 
-  // 🔹 상단 "일정 추가" 버튼 클릭
+  // 🔹 일정 추가 버튼
   const handleAddButtonClick = () => {
-    setModalData({ id: null, title: "", content: "", date: newEventDate || "", color: DEFAULT_COLORS[0] });
+    setModalData({ id: null, title: "", content: "", date: "", color: DEFAULT_COLORS[0] });
     setCustomColor("");
     setModalOpen(true);
   };
 
+  // 🔹 이벤트 클릭
   const handleEventClick = (info) => {
-    const existingEvent = events.find((e) => e.id === info.event.id);
-    if (!existingEvent) return;
+    const existing = events.find((e) => e.id === info.event.id);
+    if (!existing) return;
+
     setModalData({
-      id: existingEvent.id,
-      title: existingEvent.title,
-      content: existingEvent.content || "",
-      date: existingEvent.start,
-      color: existingEvent.color || DEFAULT_COLORS[0],
+      id: existing.id,
+      title: existing.title,
+      content: existing.content || "",
+      date: existing.start,
+      color: existing.color || DEFAULT_COLORS[0],
     });
     setCustomColor("");
     setModalOpen(true);
   };
 
+  // 🔹 이벤트 저장
   const handleSave = async () => {
     if (!currentUserId) {
       alert("관리자에게 이메일을 요청해주세요.");
+      return;
+    }
+
+    if (!modalData.date) {
+      alert("날짜를 선택해주세요.");
       return;
     }
 
@@ -102,10 +103,6 @@ function DashboardCalendar() {
           color: colorToSave,
         });
       } else {
-        if (!modalData.date) {
-          alert("날짜를 선택해주세요.");
-          return;
-        }
         await addDoc(collection(db, "events"), {
           title: modalData.title,
           content: modalData.content,
@@ -118,26 +115,28 @@ function DashboardCalendar() {
         });
       }
       setModalOpen(false);
-      setNewEventDate("");
     } catch (err) {
-      console.error("이벤트 저장 실패:", err);
-      alert("이벤트 저장에 실패했습니다.");
+      console.error("저장 실패:", err);
+      alert("이벤트 저장 실패");
     }
   };
 
+  // 🔹 이벤트 삭제
   const handleDelete = async () => {
     if (!modalData.id) return;
-    if (!window.confirm("정말로 삭제하시겠습니까?")) return;
+
+    if (!window.confirm("삭제하시겠습니까?")) return;
 
     try {
       await deleteDoc(doc(db, "events", modalData.id));
       setModalOpen(false);
     } catch (err) {
-      console.error("이벤트 삭제 실패:", err);
+      console.error("삭제 실패:", err);
       alert("삭제 실패");
     }
   };
 
+  // 🔹 드래그 이동
   const handleEventDrop = async (info) => {
     if (!currentUserId) {
       alert("관리자에게 이메일을 요청해주세요.");
@@ -151,77 +150,93 @@ function DashboardCalendar() {
         end: info.event.endStr || info.event.startStr,
       });
     } catch (err) {
-      console.error("이벤트 날짜 변경 실패:", err);
-      alert("이벤트 날짜 변경 실패");
+      console.error("변경 실패:", err);
       info.revert();
     }
   };
 
   return (
     <div className="bg-white p-4 rounded shadow relative">
-      {/* UID 없으면 안내 메시지 표시 */}
+
+      {/* UID 없음 안내 */}
       {!currentUserId && (
         <div className="p-4 mb-4 text-center text-red-600 font-semibold border border-red-300 rounded">
           관리자에게 이메일을 요청해주세요.
         </div>
       )}
 
-      {/* 상단 일정 추가 버튼 및 날짜 선택 */}
-      <div className="flex items-center mb-4 space-x-2">
-        <input
-          type="date"
-          value={newEventDate}
-          onChange={(e) => setNewEventDate(e.target.value)}
-          className="border p-2 rounded"
-          disabled={!currentUserId}
-        />
+      {/* 상단 버튼 (날짜 input 없음) */}
+      <div className="flex items-center justify-end mb-4">
         <button
-          onClick={handleAddButtonClick}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           disabled={!currentUserId}
+          onClick={handleAddButtonClick}
         >
           일정 추가
         </button>
       </div>
 
+      {/* 🔥 FullCalendar */}
       <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+        plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay",
-        }}
+        editable={true}
+        selectable={true}
+        eventClick={handleEventClick}
+        eventDrop={handleEventDrop}
         events={events.map((e) => ({
           id: e.id,
           title: e.title,
           start: e.start,
           end: e.end,
-          allDay: e.allDay,
-          backgroundColor: e.color || DEFAULT_COLORS[0],
-          borderColor: e.color || DEFAULT_COLORS[0],
+          backgroundColor: e.color,
+          borderColor: e.color,
+          allDay: true,
         }))}
-        eventClick={handleEventClick}
-        editable={true}
-        selectable={true}
-        eventDrop={handleEventDrop}
+
+        headerToolbar={{
+          left: "prev,next today",
+          center: "title",
+          right: "" // ✨ 버튼 제거
+        }}
+
+        titleFormat={(date) => {
+          const y = date.date.year;
+          const m = date.date.month + 1;
+          return `${y}년 ${m}월`;
+        }}
+
+        dayCellContent={(arg) => {
+          const day = arg.date.getDay();
+          let color = "";
+
+          if (day === 0) color = "red"; // 일요일
+          else if (day === 6) color = "blue"; // 토요일
+
+          return {
+            html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>`
+          };
+        }}
       />
 
+      {/* 🔥 모달 */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
-            <h2 className="text-lg font-bold mb-3">{modalData.id ? "이벤트 수정" : "새 이벤트"}</h2>
 
-            {/* 날짜 선택 */}
+            <h2 className="text-lg font-bold mb-3">
+              {modalData.id ? "이벤트 수정" : "새 이벤트"}
+            </h2>
+
+            {/* 🔥 일정 추가 시에만 날짜 선택 UI 표시 */}
             {!modalData.id && (
               <div className="mb-3">
-                <label className="mr-2 font-semibold">날짜:</label>
+                <label className="mr-2 font-semibold">날짜 선택:</label>
                 <input
                   type="date"
                   value={modalData.date}
                   onChange={(e) => setModalData({ ...modalData, date: e.target.value })}
                   className="border p-2 rounded"
-                  disabled={!currentUserId}
                 />
               </div>
             )}
@@ -229,18 +244,19 @@ function DashboardCalendar() {
             <input
               type="text"
               placeholder="제목"
+              className="w-full border p-3 mb-3 rounded text-lg"
               value={modalData.title}
               onChange={(e) => setModalData({ ...modalData, title: e.target.value })}
-              className="w-full border p-3 mb-3 rounded text-lg"
-              disabled={!currentUserId}
             />
+
             <textarea
               placeholder="내용"
+              className="w-full border p-3 mb-3 rounded text-lg h-[200px] resize-y"
               value={modalData.content}
               onChange={(e) => setModalData({ ...modalData, content: e.target.value })}
-              className="w-full border p-3 mb-3 rounded text-lg h-[200px] resize-y"
-              disabled={!currentUserId}
             />
+
+            {/* 색상 선택 */}
             <div className="mb-3">
               <span className="mr-2 font-semibold">색상 선택:</span>
               {DEFAULT_COLORS.map((c) => (
@@ -254,46 +270,48 @@ function DashboardCalendar() {
                     setModalData({ ...modalData, color: c });
                     setCustomColor("");
                   }}
-                  disabled={!currentUserId}
                 />
               ))}
             </div>
+
             <div className="mb-3">
               <span className="mr-2 font-semibold">커스텀 색상:</span>
               <input
                 type="color"
+                className="w-16 h-8 p-0 border rounded"
                 value={customColor}
                 onChange={(e) => setCustomColor(e.target.value)}
-                className="w-16 h-8 p-0 border rounded"
-                disabled={!currentUserId}
               />
             </div>
+
+            {/* 버튼 */}
             <div className="flex justify-end space-x-2">
               {modalData.id && (
                 <button
-                  onClick={handleDelete}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                  disabled={!currentUserId}
+                  onClick={handleDelete}
                 >
                   삭제
                 </button>
               )}
               <button
-                onClick={() => setModalOpen(false)}
                 className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                onClick={() => setModalOpen(false)}
               >
                 취소
               </button>
               <button
-                onClick={handleSave}
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={handleSave}
               >
                 저장
               </button>
             </div>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }
