@@ -32,48 +32,49 @@ function DashboardCalendar() {
     color: DEFAULT_COLORS[0],
   });
   const [customColor, setCustomColor] = useState("");
-  const [newEventDate, setNewEventDate] = useState(""); // 새 이벤트 날짜 선택용
+  const [newEventDate, setNewEventDate] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
 
-  // 🔹 로그인 상태 확인 및 Firestore 실시간 구독
+  // 🔹 Firebase Auth 상태 체크
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (user?.uid) {
         setCurrentUserId(user.uid);
-
-        const q = query(collection(db, "events"), where("userId", "==", user.uid));
-        const unsubscribeEvents = onSnapshot(q, (snapshot) => {
-          const loaded = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setEvents(loaded);
-        });
-
-        return () => unsubscribeEvents();
       } else {
         setCurrentUserId(null);
-        setEvents([]); // 로그인 안되면 이벤트 초기화
+        setEvents([]); // UID 없으면 이벤트 초기화
       }
     });
 
     return () => unsubscribeAuth();
   }, []);
 
+  // 🔹 Firestore 실시간 구독 (UID 있을 때만)
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const q = query(collection(db, "events"), where("userId", "==", currentUserId));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loaded = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setEvents(loaded);
+    });
+
+    return () => unsubscribe();
+  }, [currentUserId]);
+
   // 🔹 상단 "일정 추가" 버튼 클릭
   const handleAddButtonClick = () => {
-    if (!currentUserId) return; // 로그인 안되면 모달 열지 않음
     setModalData({ id: null, title: "", content: "", date: newEventDate || "", color: DEFAULT_COLORS[0] });
     setCustomColor("");
     setModalOpen(true);
   };
 
   const handleEventClick = (info) => {
-    if (!currentUserId) return; // 로그인 안되면 모달 열지 않음
-
     const existingEvent = events.find((e) => e.id === info.event.id);
     if (!existingEvent) return;
-
     setModalData({
       id: existingEvent.id,
       title: existingEvent.title,
@@ -86,7 +87,11 @@ function DashboardCalendar() {
   };
 
   const handleSave = async () => {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      alert("관리자에게 이메일을 요청해주세요.");
+      return;
+    }
+
     const colorToSave = customColor || modalData.color;
 
     try {
@@ -121,7 +126,7 @@ function DashboardCalendar() {
   };
 
   const handleDelete = async () => {
-    if (!currentUserId || !modalData.id) return;
+    if (!modalData.id) return;
     if (!window.confirm("정말로 삭제하시겠습니까?")) return;
 
     try {
@@ -135,6 +140,7 @@ function DashboardCalendar() {
 
   const handleEventDrop = async (info) => {
     if (!currentUserId) {
+      alert("관리자에게 이메일을 요청해주세요.");
       info.revert();
       return;
     }
@@ -153,27 +159,30 @@ function DashboardCalendar() {
 
   return (
     <div className="bg-white p-4 rounded shadow relative">
-      {/* 로그인 안되면 안내 메시지 표시 */}
-      {!currentUserId ? (
-        <div className="text-center p-4 bg-yellow-100 border border-yellow-300 rounded text-yellow-800 font-semibold">
+      {/* UID 없으면 안내 메시지 표시 */}
+      {!currentUserId && (
+        <div className="p-4 mb-4 text-center text-red-600 font-semibold border border-red-300 rounded">
           관리자에게 이메일을 요청해주세요.
         </div>
-      ) : (
-        <div className="flex items-center mb-4 space-x-2">
-          <input
-            type="date"
-            value={newEventDate}
-            onChange={(e) => setNewEventDate(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <button
-            onClick={handleAddButtonClick}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            일정 추가
-          </button>
-        </div>
       )}
+
+      {/* 상단 일정 추가 버튼 및 날짜 선택 */}
+      <div className="flex items-center mb-4 space-x-2">
+        <input
+          type="date"
+          value={newEventDate}
+          onChange={(e) => setNewEventDate(e.target.value)}
+          className="border p-2 rounded"
+          disabled={!currentUserId}
+        />
+        <button
+          onClick={handleAddButtonClick}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          disabled={!currentUserId}
+        >
+          일정 추가
+        </button>
+      </div>
 
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -193,16 +202,17 @@ function DashboardCalendar() {
           borderColor: e.color || DEFAULT_COLORS[0],
         }))}
         eventClick={handleEventClick}
-        editable={!!currentUserId}
-        selectable={!!currentUserId}
+        editable={true}
+        selectable={true}
         eventDrop={handleEventDrop}
       />
 
-      {modalOpen && currentUserId && (
+      {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
             <h2 className="text-lg font-bold mb-3">{modalData.id ? "이벤트 수정" : "새 이벤트"}</h2>
 
+            {/* 날짜 선택 */}
             {!modalData.id && (
               <div className="mb-3">
                 <label className="mr-2 font-semibold">날짜:</label>
@@ -211,6 +221,7 @@ function DashboardCalendar() {
                   value={modalData.date}
                   onChange={(e) => setModalData({ ...modalData, date: e.target.value })}
                   className="border p-2 rounded"
+                  disabled={!currentUserId}
                 />
               </div>
             )}
@@ -221,12 +232,14 @@ function DashboardCalendar() {
               value={modalData.title}
               onChange={(e) => setModalData({ ...modalData, title: e.target.value })}
               className="w-full border p-3 mb-3 rounded text-lg"
+              disabled={!currentUserId}
             />
             <textarea
               placeholder="내용"
               value={modalData.content}
               onChange={(e) => setModalData({ ...modalData, content: e.target.value })}
               className="w-full border p-3 mb-3 rounded text-lg h-[200px] resize-y"
+              disabled={!currentUserId}
             />
             <div className="mb-3">
               <span className="mr-2 font-semibold">색상 선택:</span>
@@ -241,6 +254,7 @@ function DashboardCalendar() {
                     setModalData({ ...modalData, color: c });
                     setCustomColor("");
                   }}
+                  disabled={!currentUserId}
                 />
               ))}
             </div>
@@ -251,6 +265,7 @@ function DashboardCalendar() {
                 value={customColor}
                 onChange={(e) => setCustomColor(e.target.value)}
                 className="w-16 h-8 p-0 border rounded"
+                disabled={!currentUserId}
               />
             </div>
             <div className="flex justify-end space-x-2">
@@ -258,6 +273,7 @@ function DashboardCalendar() {
                 <button
                   onClick={handleDelete}
                   className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                  disabled={!currentUserId}
                 >
                   삭제
                 </button>
