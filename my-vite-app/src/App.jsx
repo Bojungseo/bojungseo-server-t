@@ -1608,6 +1608,9 @@ function App() {
   // 🔑 로그인 처리 (백엔드 + Firebase)
   const handleLogin = async (username, password) => {
     try {
+      // 1️⃣ 기존 로그인 세션 초기화
+      await signOut(auth);
+        
       // 1️⃣ 백엔드 로그인
       const data = await apiLogin(username, password);
 
