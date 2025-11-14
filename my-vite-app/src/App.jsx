@@ -930,19 +930,17 @@ function MenuPage2({ onGoToDashboard }) {
             // 1차 검색 시 체크박스 필터링을 여기서 적용하여 baseResults를 확정
             let initialFiltered = data;
 
-            // 입원유무 필터 적용
-            if (isHospitalized) {
-                initialFiltered = initialFiltered.filter(p => p.입원유무 && p.입원유무.includes('예'));
-            } else {
-                initialFiltered = initialFiltered.filter(p => p.입원유무 && p.입원유무.includes('아니오'));
-            }
+            // 입원유무 필터 적용 (안전한 접근 적용)
+            initialFiltered = initialFiltered.filter(p => {
+                const value = p.입원유무 || ''; // null/undefined를 빈 문자열로 처리
+                return isHospitalized ? value.includes('예') : value.includes('아니오');
+            });
 
             // 수술유무 필터 적용
-            if (hadSurgery) {
-                initialFiltered = initialFiltered.filter(p => p.수술유무 && p.수술유무.includes('예'));
-            } else {
-                initialFiltered = initialFiltered.filter(p => p.수술유무 && p.수술유무.includes('아니오'));
-            }
+            initialFiltered = initialFiltered.filter(p => {
+                const value = p.수술유무 || ''; // null/undefined를 빈 문자열로 처리
+                return hadSurgery ? value.includes('예') : value.includes('아니오');
+            });
             
             setBaseResults(initialFiltered);
             setDisplayResults(initialFiltered);
@@ -990,30 +988,21 @@ function MenuPage2({ onGoToDashboard }) {
 
         let filtered = [...baseResults];
 
-        if (isHospitalized) {
-            filtered = filtered.filter(p => p.입원유무 && p.입원유무.includes('예'));
-        } else {
-             filtered = filtered.filter(p => p.입원유무 && p.입원유무.includes('아니오'));
-        }
-
-        if (hadSurgery) {
-            filtered = filtered.filter(p => p.수술유무 && p.수술유무.includes('예'));
-        } else {
-            filtered = filtered.filter(p => p.수술유무 && p.수술유무.includes('아니오'));
-        }
-        
+         // 1. 재검색 키워드 필터링
         if (secondaryKeyword.trim()) {
             const secondaryKwd = secondaryKeyword.trim().toLowerCase();
             filtered = filtered.filter(p => p.병명 && p.병명.toLowerCase().includes(secondaryKwd));
         }
 
+        // 2. 보험회사 필터링
         if (selectedInsurance !== '전체') {
             filtered = filtered.filter(p => p.보험회사 === selectedInsurance);
         }
         
-        setDisplayResults(filtered);
+        // 렌더링 시 시각적 오류 방지를 위해 새로운 배열로 강제 생성하여 렌더링
+        setDisplayResults([...filtered]); 
 
-    }, [isHospitalized, hadSurgery, baseResults, filtersEnabled, secondaryKeyword, selectedInsurance]); 
+    }, [baseResults, filtersEnabled, secondaryKeyword, selectedInsurance]); 
 
     return (
         <div className="p-8 min-h-screen bg-gray-50">
@@ -1044,7 +1033,7 @@ function MenuPage2({ onGoToDashboard }) {
                                         type="checkbox"
                                         checked={isHospitalized}
                                         onChange={(e) => setIsHospitalized(e.target.checked)}
-                                        disabled={filtersEnabled}
+                                        disabled={filtersEnabled || loading} // ✨ 활성화 반전
                                         className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 disabled:bg-gray-200"
                                     />
                                     입원유무
@@ -1054,7 +1043,7 @@ function MenuPage2({ onGoToDashboard }) {
                                         type="checkbox"
                                         checked={hadSurgery}
                                         onChange={(e) => setHadSurgery(e.target.checked)}
-                                        disabled={filtersEnabled}
+                                        disabled={filtersEnabled || loading} // ✨ 활성화 반전
                                         className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 disabled:bg-gray-200"
                                     />
                                     수술유무
@@ -1074,29 +1063,31 @@ function MenuPage2({ onGoToDashboard }) {
                         </div>
                         
                         {/* 2차 재검색 및 체크박스/드롭다운 필터 영역 */}
-                        <div className="p-4 bg-white rounded-md flex flex-col md:flex-row items-center gap-4 border border-dashed border-gray-300">
+                        <div className="p-4 bg-white rounded-md flex flex-col gap-4 border border-dashed border-gray-300">
                             
-                            {/* 보험회사 드롭다운 */}
-                            <select 
-                                value={selectedInsurance}
-                                onChange={(e) => setSelectedInsurance(e.target.value)}
-                                disabled={!filtersEnabled || loading}
-                                className={`px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
-                            >
-                                {insuranceCompanies.map(company => (
-                                    <option key={company} value={company}>{company}</option>
-                                ))}
-                            </select>
+                            <div className="flex items-center gap-4 w-full">
+                                {/* 보험회사 드롭다운 */}
+                                <select 
+                                    value={selectedInsurance}
+                                    onChange={(e) => setSelectedInsurance(e.target.value)}
+                                    disabled={!filtersEnabled || loading}
+                                    className={`px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
+                                >
+                                    {insuranceCompanies.map(company => (
+                                        <option key={company} value={company}>{company}</option>
+                                    ))}
+                                </select>
 
-                            {/* 2차 재검색 입력 칸 */}
-                            <input 
-                                type="text"
-                                value={secondaryKeyword}
-                                onChange={(e) => setSecondaryKeyword(e.target.value)}
-                                placeholder="2차 필터: 검색 결과 내에서 병명 재검색"
-                                disabled={!filtersEnabled || loading}
-                                className={`flex-grow px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
-                            />
+                                {/* 2차 재검색 입력 칸 */}
+                                <input 
+                                    type="text"
+                                    value={secondaryKeyword}
+                                    onChange={(e) => setSecondaryKeyword(e.target.value)}
+                                    placeholder="2차 필터: 검색 결과 내에서 병명 재검색"
+                                    disabled={!filtersEnabled || loading}
+                                    className={`flex-grow px-3 py-2 border rounded-md ${!filtersEnabled ? 'bg-gray-200' : 'bg-white'}`}
+                                />
+                            </div>
                         </div>
                     </form>
 
