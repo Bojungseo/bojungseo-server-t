@@ -411,8 +411,15 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                         </div>
 
                         {/* 중앙: 캘린더 */}
-                        <div className="flex-1">
-                            <DashboardCalendar userId={user.id} />
+                        <div
+                          className="flex-1"
+                          style={{
+                            height: "calc(100vh - 250px)", // 화면 높이에 따라 자동 줄어듦
+                            minHeight: "400px",            // 너무 작아지지 않도록 최소 보장
+                            overflow: "auto",              // 내부 스크롤
+                          }}
+                        >
+                          <DashboardCalendar userId={user.id} />
                         </div>
 
                         {/* 오른쪽: 지원 기능 */}
