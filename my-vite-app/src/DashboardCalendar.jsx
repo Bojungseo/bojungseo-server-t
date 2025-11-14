@@ -182,7 +182,7 @@ function DashboardCalendar() {
         style={{
           maxHeight: "650px",  // 최대 높이
           minHeight: "400px",  // 최소 높이
-          maxWidth: "1200px",  // 최대 너비
+          maxWidth: "1000px",  // 최대 너비
           minWidth: "600px",   // 최소 너비
           margin: "0 auto",    // 좌우 중앙 정렬
         }}
