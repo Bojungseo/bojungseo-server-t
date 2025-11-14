@@ -165,7 +165,7 @@ function DashboardCalendar() {
         </div>
       )}
 
-      {/* 상단 버튼 (날짜 input 없음) */}
+      {/* 상단 버튼 */}
       <div className="flex items-center justify-end mb-4">
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -176,14 +176,15 @@ function DashboardCalendar() {
         </button>
       </div>
 
-      {/* 🔥 FullCalendar (크기 조절 적용) */}
+      {/* 🔥 FullCalendar (전체 크기 조절 적용) */}
       <div
-        className="w-full rounded shadow bg-white overflow-auto"
+        className="w-full rounded shadow bg-white"
         style={{
-          maxHeight: "650px",  // 최대 높이
+          maxHeight: "650px",  // 전체 캘린더 최대 높이
           minHeight: "400px",  // 최소 높이
-          maxWidth: "1000px",  // 최대 너비
-          minWidth: "600px",   // 최소 너비
+          maxWidth: "1200px",  // 최대 폭
+          minWidth: "600px",   // 최소 폭
+          height: "100%",      // 상위 div에 맞춰 반응형
           margin: "0 auto",    // 좌우 중앙 정렬
         }}
       >
@@ -203,26 +204,22 @@ function DashboardCalendar() {
             borderColor: e.color,
             allDay: true,
           }))}
-
           headerToolbar={{
             left: "prev,next today",
             center: "title",
             right: "" // 버튼 제거
           }}
-
+          height="100%" // 부모 div 높이 기준
           titleFormat={(date) => {
             const y = date.date.year;
             const m = date.date.month + 1;
             return `${y}년 ${m}월`;
           }}
-
           dayCellContent={(arg) => {
             const day = arg.date.getDay();
             let color = "";
-
             if (day === 0) color = "red"; // 일요일
             else if (day === 6) color = "blue"; // 토요일
-
             return {
               html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>`
             };
@@ -239,7 +236,7 @@ function DashboardCalendar() {
               {modalData.id ? "이벤트 수정" : "새 이벤트"}
             </h2>
 
-            {/* 🔥 일정 추가 시에만 날짜 선택 UI 표시 */}
+            {/* 일정 추가 시에만 날짜 선택 UI */}
             {!modalData.id && (
               <div className="mb-3">
                 <label className="mr-2 font-semibold">날짜 선택:</label>
