@@ -1608,41 +1608,51 @@ function App() {
   // 🔑 로그인 처리 (백엔드 + Firebase)
   const handleLogin = async (username, password) => {
     try {
-      // 1️⃣ 기존 로그인 세션 초기화
-      await signOut(auth);
-        
-      // 1️⃣ 백엔드 로그인
-      const data = await apiLogin(username, password);
-
-      // 2️⃣ Firebase Authentication 로그인
-      const email = `${username}@320.com`;
+    // 🔥 0) 로그인 시작할 때마다 Firebase UID 강제 초기화
+      try {
+        await signOut(auth);
+        console.log("🔄 기존 Firebase 세션 초기화 완료");
+      } catch (e) {
+          console.warn("기존 세션 초기화 중 경고(무시):", e.message);
+      }
+        // 🔥 1) 기존 firebaseUid 값 제거 (프론트엔드에서도 초기화)
       let firebaseUid = null;
 
+    // 🔥 2) 백엔드 로그인
+      const data = await apiLogin(username, password);
+
+    // 🔥 3) Firebase 재로그인 (항상 새로운 UID를 불러오게 됨)
+      const email = `${username}@320.com`;
+
       try {
-        const firebaseUserCredential = await signInWithEmailAndPassword(auth, email, password);
-        const firebaseUser = firebaseUserCredential.user;
-        firebaseUid = firebaseUser.uid;
-        console.log("✅ Firebase 로그인 성공:", firebaseUser.email, firebaseUser.uid);
+        const firebaseUserCredential =
+          await signInWithEmailAndPassword(auth, email, password);
+
+        firebaseUid = firebaseUserCredential.user.uid;
+        console.log(
+          "✅ Firebase 재로그인 성공:",
+          firebaseUserCredential.user.email,
+          firebaseUid
+        );
       } catch (firebaseError) {
         console.warn("⚠️ Firebase 로그인 실패:", firebaseError.message);
-        // 필요 시 createUserWithEmailAndPassword 로직 추가 가능
       }
 
-      // 3️⃣ 로컬 스토리지에 로그인 정보 저장 (1시간 만료)
+      // 🔥 4) 이제 완전히 새로운 firebaseUid로 user 저장
       const now = new Date();
       const item = {
         user: {
           ...data.user,
-          firebaseUid, // ✅ UID 포함
+          firebaseUid,
         },
-        expiry: now.getTime() + 60 * 60 * 1000,
+        expiry: now.getTime() + 60 * 60 * 1000, // 1시간
       };
-      localStorage.setItem('loggedInUser', JSON.stringify(item));
-
-      // 4️⃣ 상태 업데이트 및 페이지 전환
+  
+      localStorage.setItem("loggedInUser", JSON.stringify(item));
+  
       setUser(item.user);
-      setCurrentPage('dashboard');
-
+      setCurrentPage("dashboard");
+  
     } catch (error) {
       console.error("❌ 로그인 전체 실패:", error.message);
       throw new Error(error.message || "로그인 실패");
