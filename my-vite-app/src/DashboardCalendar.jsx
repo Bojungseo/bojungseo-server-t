@@ -40,18 +40,14 @@ async function fetchKoreanHolidays(year, month) {
 
     if (!Array.isArray(items)) items = [items]; // 단일 객체 처리
 
+    // isHoliday === "Y"만 필터링 후 { date: "YYYY-MM-DD", name: "휴일명" } 배열로 반환
     return items
-      .filter((h) => h.isHoliday === "Y") // 공휴일만 필터링
+      .filter((h) => h.isHoliday === "Y")
       .map((h) => ({
-        title: `${h.dateName} (공휴일)`,
-        start: `${h.locdate.toString().slice(0, 4)}-${h.locdate
+        date: `${h.locdate.toString().slice(0, 4)}-${h.locdate
           .toString()
           .slice(4, 6)}-${h.locdate.toString().slice(6, 8)}`,
-        backgroundColor: "#EF4444",
-        borderColor: "#EF4444",
-        allDay: true,
-        color: "#EF4444",
-        id: `holiday-${h.locdate}`,
+        name: h.dateName,
       }));
   } catch (e) {
     console.error("공휴일 API 오류:", e);
@@ -61,7 +57,7 @@ async function fetchKoreanHolidays(year, month) {
 
 function DashboardCalendar() {
   const [events, setEvents] = useState([]);
-  const [holidayEvents, setHolidayEvents] = useState([]); // ★ 공휴일 저장
+  const [holidayList, setHolidayList] = useState([]); // 공휴일 목록
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState({
@@ -130,7 +126,7 @@ function DashboardCalendar() {
 
     // 공휴일 가져오기
     const holidays = await fetchKoreanHolidays(y, m);
-    setHolidayEvents(holidays);
+    setHolidayList(holidays);
   };
 
   // ------------------------------------------------
@@ -337,7 +333,7 @@ function DashboardCalendar() {
         height="auto"
         contentHeight="auto"
         dayMaxEventRows={3}
-        events={[...filteredEvents, ...holidayEvents]} // 공휴일 포함
+        events={filteredEvents} // 공휴일 제거
         dayCellContent={(arg) => {
           const day = arg.date.getDay();
           let color = "";
@@ -346,6 +342,24 @@ function DashboardCalendar() {
           return {
             html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText.replace("일","")}</span>`,
           };
+        }}
+        dayCellDidMount={(arg) => {
+          // 공휴일 표시
+          const holiday = holidayList.find(h => h.date === arg.dateStr);
+          if (holiday) {
+            const el = document.createElement("div");
+            el.innerText = holiday.name;
+            el.style.fontSize = "0.7rem";
+            el.style.color = "#EF4444";
+            el.style.pointerEvents = "none";
+            el.style.whiteSpace = "normal"; // 줄바꿈 허용
+            el.style.wordWrap = "break-word";
+            el.style.position = "absolute";
+            el.style.left = "2px";
+            el.style.top = "2px";
+            arg.el.style.position = "relative"; // 부모가 relative여야 좌측 상단 배치 가능
+            arg.el.appendChild(el);
+          }
         }}
         datesSet={() => updateYearMonth()}
         ref={(ref) => {
