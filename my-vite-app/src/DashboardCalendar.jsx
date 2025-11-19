@@ -209,7 +209,7 @@ function DashboardCalendar() {
             className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => { calendarApi.prev(); updateYearMonth(); }}
           >
-            이전달
+            ◀
           </button>
 
           <button
@@ -223,7 +223,7 @@ function DashboardCalendar() {
             className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
             onClick={() => { calendarApi.next(); updateYearMonth(); }}
           >
-            다음달
+            ▶
           </button>
         </div>
 
@@ -284,6 +284,7 @@ function DashboardCalendar() {
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
+        headerToolbar={false}   // ← 기본 헤더 완전히 제거!!!
         editable
         selectable
         eventClick={handleEventClick}
