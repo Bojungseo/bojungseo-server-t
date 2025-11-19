@@ -33,12 +33,11 @@ function DashboardCalendar() {
   const [customColor, setCustomColor] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
 
-  // 🔹 날짜 클릭 리스트 모달
   const [dateListModalOpen, setDateListModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [eventsForSelectedDate, setEventsForSelectedDate] = useState([]);
 
-  // 🔹 Firebase Auth 체크
+  // Firebase Auth 체크
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       setCurrentUserId(user?.uid || null);
@@ -47,7 +46,7 @@ function DashboardCalendar() {
     return () => unsubscribeAuth();
   }, []);
 
-  // 🔹 Firestore 구독
+  // Firestore 구독
   useEffect(() => {
     if (!currentUserId) return;
     const q = query(collection(db, "events"), where("userId", "==", currentUserId));
@@ -61,7 +60,7 @@ function DashboardCalendar() {
     return () => unsubscribe();
   }, [currentUserId]);
 
-  // 🔹 기존 이벤트 클릭 → 수정 모달
+  // 기존 이벤트 클릭 → 수정 모달
   const handleEventClick = (info) => {
     const existing = events.find((e) => e.id === info.event.id);
     if (!existing) return;
@@ -76,7 +75,7 @@ function DashboardCalendar() {
     setModalOpen(true);
   };
 
-  // 🔹 날짜 클릭 → 리스트 모달
+  // 날짜 클릭 → 리스트 모달
   const handleDateClick = (info) => {
     const dateStr = info.dateStr;
     setSelectedDate(dateStr);
@@ -85,16 +84,10 @@ function DashboardCalendar() {
     setDateListModalOpen(true);
   };
 
-  // 🔹 이벤트 저장
+  // 이벤트 저장
   const handleSave = async () => {
-    if (!currentUserId) {
-      alert("관리자에게 이메일을 요청해주세요.");
-      return;
-    }
-    if (!modalData.date) {
-      alert("날짜를 선택해주세요.");
-      return;
-    }
+    if (!currentUserId) { alert("관리자에게 이메일을 요청해주세요."); return; }
+    if (!modalData.date) { alert("날짜를 선택해주세요."); return; }
     const colorToSave = customColor || modalData.color;
     try {
       if (modalData.id) {
@@ -116,17 +109,17 @@ function DashboardCalendar() {
         });
       }
       setModalOpen(false);
-      setDateListModalOpen(false); // 리스트 모달 닫기
+      setDateListModalOpen(false);
     } catch (err) {
       console.error("저장 실패:", err);
-      alert("이벤트 저장 실패");
+      alert("일정 저장 실패");
     }
   };
 
-  // 🔹 이벤트 삭제
+  // 이벤트 삭제
   const handleDelete = async () => {
     if (!modalData.id) return;
-    if (!window.confirm("삭제하시겠습니까?")) return;
+    if (!window.confirm("일정을 삭제하시겠습니까?")) return;
     try {
       await deleteDoc(doc(db, "events", modalData.id));
       setModalOpen(false);
@@ -137,13 +130,9 @@ function DashboardCalendar() {
     }
   };
 
-  // 🔹 드래그 이동
+  // 드래그 이동
   const handleEventDrop = async (info) => {
-    if (!currentUserId) {
-      alert("관리자에게 이메일을 요청해주세요.");
-      info.revert();
-      return;
-    }
+    if (!currentUserId) { alert("관리자에게 이메일을 요청해주세요."); info.revert(); return; }
     try {
       await updateDoc(doc(db, "events", info.event.id), {
         start: info.event.startStr,
@@ -155,39 +144,42 @@ function DashboardCalendar() {
     }
   };
 
+  // 커스텀 FullCalendar Header (일정추가 버튼 포함)
+  const renderHeaderToolbar = () => ({
+    left: "prev,next today",
+    center: "title",
+    right: "customAddBtn"
+  });
+
+  const renderCustomAddButton = () => (
+    <button
+      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+      onClick={() => {
+        setDateListModalOpen(false);
+        setModalData({
+          id: null,
+          title: "",
+          content: "",
+          date: "",
+          color: DEFAULT_COLORS[0],
+        });
+        setCustomColor("");
+        setModalOpen(true);
+      }}
+    >
+      일정 추가
+    </button>
+  );
+
   return (
     <div className="bg-white p-4 rounded shadow relative">
 
-      {/* UID 없음 안내 */}
       {!currentUserId && (
         <div className="p-4 mb-4 text-center text-red-600 font-semibold border border-red-300 rounded">
           관리자에게 이메일을 요청해주세요.
         </div>
       )}
 
-      {/* 상단 버튼 */}
-      <div className="flex items-center justify-end mb-4">
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          disabled={!currentUserId}
-          onClick={() => {
-            setDateListModalOpen(false); // 리스트 모달 닫기
-            setModalData({
-              id: null,
-              title: "",
-              content: "",
-              date: "",
-              color: DEFAULT_COLORS[0],
-            });
-            setCustomColor("");
-            setModalOpen(true);
-          }}
-        >
-          일정 추가
-        </button>
-      </div>
-
-      {/* 🔥 FullCalendar */}
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
@@ -200,7 +192,7 @@ function DashboardCalendar() {
         height="auto"
         contentHeight="auto"
         dayMaxEventRows={3}
-        events={events.map((e) => ({
+        events={events.map(e => ({
           id: e.id,
           title: e.title,
           start: e.start,
@@ -212,15 +204,28 @@ function DashboardCalendar() {
         headerToolbar={{
           left: "prev,next today",
           center: "title",
-          right: ""
+          right: "" // 커스텀 버튼은 외부 div로 처리
+        }}
+        titleFormat={{ year: 'numeric', month: 'numeric' }} // 연도, 월 숫자 표시
+        dayCellContent={(arg) => {
+          const day = arg.date.getDay();
+          let color = "";
+          if (day === 0) color = "red";
+          else if (day === 6) color = "blue";
+          return { html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>` };
         }}
       />
 
-      {/* 🔹 일정 추가/수정 모달 */}
+      {/* 캘린더 헤더 우측 끝 일정추가 버튼 */}
+      <div className="absolute top-6 right-6 z-50">
+        {renderCustomAddButton()}
+      </div>
+
+      {/* 일정 추가/수정 모달 */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
-            <h2 className="text-lg font-bold mb-3">{modalData.id ? "이벤트 수정" : "새 이벤트"}</h2>
+            <h2 className="text-lg font-bold mb-3">{modalData.id ? "일정 수정" : "새 일정"}</h2>
 
             {!modalData.id && (
               <div className="mb-3">
@@ -249,24 +254,20 @@ function DashboardCalendar() {
               onChange={(e) => setModalData({ ...modalData, content: e.target.value })}
             />
 
-            {/* 색상 선택 */}
             <div className="mb-3">
               <span className="mr-2 font-semibold">색상 선택:</span>
-              {DEFAULT_COLORS.map((c) => (
+              {DEFAULT_COLORS.map(c => (
                 <button
                   key={c}
                   style={{ backgroundColor: c }}
                   className={`w-6 h-6 rounded-full mr-1 border-2 ${modalData.color === c ? "border-black" : "border-gray-300"}`}
-                  onClick={() => {
-                    setModalData({ ...modalData, color: c });
-                    setCustomColor("");
-                  }}
+                  onClick={() => { setModalData({ ...modalData, color: c }); setCustomColor(""); }}
                 />
               ))}
             </div>
 
             <div className="mb-3">
-              <span className="mr-2 font-semibold">커스텀 색상:</span>
+              <span className="mr-2 font-semibold">직접 색상지정:</span>
               <input
                 type="color"
                 className="w-16 h-8 p-0 border rounded"
@@ -301,7 +302,7 @@ function DashboardCalendar() {
         </div>
       )}
 
-      {/* 🔹 날짜 클릭 리스트 모달 */}
+      {/* 날짜 클릭 리스트 모달 */}
       {dateListModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-40">
           <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
@@ -326,7 +327,7 @@ function DashboardCalendar() {
                     });
                     setCustomColor("");
                     setModalOpen(true);
-                    setDateListModalOpen(false); // 🔹 리스트 모달 닫기
+                    setDateListModalOpen(false);
                   }}
                 >
                   {e.title}
@@ -353,7 +354,7 @@ function DashboardCalendar() {
                   });
                   setCustomColor("");
                   setModalOpen(true);
-                  setDateListModalOpen(false); // 🔹 리스트 모달 닫기
+                  setDateListModalOpen(false);
                 }}
               >
                 일정 추가
@@ -362,6 +363,7 @@ function DashboardCalendar() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
