@@ -37,7 +37,7 @@ function DashboardCalendar() {
   const [selectedDate, setSelectedDate] = useState("");
   const [eventsForSelectedDate, setEventsForSelectedDate] = useState([]);
 
-  // Firebase Auth 체크
+  // 🔹 Firebase Auth 체크
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       setCurrentUserId(user?.uid || null);
@@ -46,7 +46,7 @@ function DashboardCalendar() {
     return () => unsubscribeAuth();
   }, []);
 
-  // Firestore 구독
+  // 🔹 Firestore 구독
   useEffect(() => {
     if (!currentUserId) return;
     const q = query(collection(db, "events"), where("userId", "==", currentUserId));
@@ -60,7 +60,7 @@ function DashboardCalendar() {
     return () => unsubscribe();
   }, [currentUserId]);
 
-  // 기존 이벤트 클릭 → 수정 모달
+  // 🔹 기존 이벤트 클릭 → 수정 모달
   const handleEventClick = (info) => {
     const existing = events.find((e) => e.id === info.event.id);
     if (!existing) return;
@@ -75,7 +75,7 @@ function DashboardCalendar() {
     setModalOpen(true);
   };
 
-  // 날짜 클릭 → 리스트 모달
+  // 🔹 날짜 클릭 → 리스트 모달
   const handleDateClick = (info) => {
     const dateStr = info.dateStr;
     setSelectedDate(dateStr);
@@ -84,7 +84,7 @@ function DashboardCalendar() {
     setDateListModalOpen(true);
   };
 
-  // 이벤트 저장
+  // 🔹 이벤트 저장
   const handleSave = async () => {
     if (!currentUserId) { alert("관리자에게 이메일을 요청해주세요."); return; }
     if (!modalData.date) { alert("날짜를 선택해주세요."); return; }
@@ -116,7 +116,7 @@ function DashboardCalendar() {
     }
   };
 
-  // 이벤트 삭제
+  // 🔹 이벤트 삭제
   const handleDelete = async () => {
     if (!modalData.id) return;
     if (!window.confirm("일정을 삭제하시겠습니까?")) return;
@@ -130,7 +130,7 @@ function DashboardCalendar() {
     }
   };
 
-  // 드래그 이동
+  // 🔹 드래그 이동
   const handleEventDrop = async (info) => {
     if (!currentUserId) { alert("관리자에게 이메일을 요청해주세요."); info.revert(); return; }
     try {
@@ -144,7 +144,7 @@ function DashboardCalendar() {
     }
   };
 
-  // 캘린더 우측 상단 일정추가 버튼
+  // 🔹 캘린더 우측 상단 일정추가 버튼
   const renderCustomAddButton = () => (
     <button
       className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
@@ -174,51 +174,50 @@ function DashboardCalendar() {
         </div>
       )}
 
-      <FullCalendar
-        plugins={[dayGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        editable={true}
-        selectable={true}
-        eventClick={handleEventClick}
-        dateClick={handleDateClick}
-        eventDrop={handleEventDrop}
-        expandRows={true}
-        height="auto"
-        contentHeight="auto"
-        dayMaxEventRows={3}
-        events={events.map(e => ({
-          id: e.id,
-          title: e.title,
-          start: e.start,
-          end: e.end,
-          backgroundColor: e.color,
-          borderColor: e.color,
-          allDay: true,
-        }))}
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "" // 커스텀 버튼은 외부 div로 처리
-        }}
-        titleFormat={() => {
-          const today = new Date();
-          const y = today.getFullYear();
-          const m = today.getMonth() + 1;
-          return `${y}년 ${m}월`;
-        }}
-        locale="ko"
-        dayCellContent={(arg) => {
-          const day = arg.date.getDay();
-          let color = "";
-          if (day === 0) color = "red";
-          else if (day === 6) color = "blue";
-          return { html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>` };
-        }}
-      />
+      {/* 캘린더 중앙 정렬 */}
+      <div className="flex justify-center relative">
+        <div style={{ width: "100%", maxWidth: "1300px" }} className="relative">
+          <FullCalendar
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            editable={true}
+            selectable={true}
+            eventClick={handleEventClick}
+            dateClick={handleDateClick}
+            eventDrop={handleEventDrop}
+            expandRows={true}
+            height="auto"
+            contentHeight="auto"
+            dayMaxEventRows={3}
+            events={events.map(e => ({
+              id: e.id,
+              title: e.title,
+              start: e.start,
+              end: e.end,
+              backgroundColor: e.color,
+              borderColor: e.color,
+              allDay: true,
+            }))}
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "" // 버튼은 외부 div에서 처리
+            }}
+            titleFormat={{ year: 'numeric', month: 'numeric' }} // 2025년 11월 형식
+            dayCellContent={(arg) => {
+              const day = arg.date.getDay();
+              let color = "";
+              if (day === 0) color = "red";
+              else if (day === 6) color = "blue";
+              return { html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>` };
+            }}
+          />
 
-      {/* 캘린더 헤더 우측 끝 일정추가 버튼 */}
-      <div className="absolute top-6 right-6 z-50">
-        {renderCustomAddButton()}
+          {/* 캘린더 우측 상단 일정추가 버튼 */}
+          <div className="absolute top-6 right-6 z-50">
+            {renderCustomAddButton()}
+          </div>
+        </div>
       </div>
 
       {/* 일정 추가/수정 모달 */}
