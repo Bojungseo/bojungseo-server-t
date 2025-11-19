@@ -236,7 +236,7 @@ function RequestIdModal({ onClose, onRegisterSuccess }) {
               <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="신청자 이름" className="w-full px-3 py-2 border rounded-md" required />
             </div>
             <div className="mb-4">
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="사용할 비밀번호" className="w-full px-3 py-2 border rounded-md" required />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="사용할 비밀번호(6자이상)" className="w-full px-3 py-2 border rounded-md" required />
             </div>
             <div className="mb-4">
               <input type="text" value={본부} onChange={(e) => set본부(e.target.value)} placeholder="본부 입력 [예) 320본부]" className="w-full px-3 py-2 border rounded-md" required />
@@ -410,16 +410,25 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                             )}
                         </div>
 
-                        {/* 중앙: 캘린더 */}
+                       {/* 🔥 중앙: 캘린더 (수정된 부분) */}
                         <div
-                          className="flex-1"
-                          style={{
-                            minHeight: "400px",   // 최소 보장
-                            height: "auto",       // 자동 확장 → 캘린더가 자연 높이를 가짐
-                            overflow: "visible",  // 내부 스크롤 제거
-                          }}
+                            className="flex-1 flex justify-center"
+                            style={{
+                                minHeight: "400px",
+                                height: "auto",
+                                overflow: "visible",
+                            }}
                         >
-                          <DashboardCalendar userId={user.id} />
+                            <div
+                                style={{
+                                    width: "100%",
+                                    maxWidth: "1100px",
+                                    padding: "0 12px",
+                                    boxSizing: "border-box",
+                                }}
+                            >
+                                <DashboardCalendar userId={user.id} />
+                            </div>
                         </div>
 
                         {/* 오른쪽: 지원 기능 */}
@@ -427,7 +436,7 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                             <QuickLinksVertical />
                         </div>
                     </div>
-
+                    
                     {/* 공지사항 & 게시판 */}
                     <div className="flex justify-between items-start gap-8 mb-8">
                         <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md max-w-sm w-full">
