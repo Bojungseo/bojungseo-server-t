@@ -203,13 +203,14 @@ function DashboardCalendar() {
               center: "title",
               right: "" // 버튼은 외부 div에서 처리
             }}
-            titleFormat={{ year: 'numeric', month: 'numeric' }} // 2025년 11월 형식
+            titleFormat={{ year: 'numeric', month: 'numeric' }} 
             dayCellContent={(arg) => {
+              // 숫자만 표시, 토/일 색상
               const day = arg.date.getDay();
               let color = "";
-              if (day === 0) color = "red";
-              else if (day === 6) color = "blue";
-              return { html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>` };
+              if (day === 0) color = "red"; // 일요일
+              else if (day === 6) color = "blue"; // 토요일
+              return { html: `<span style="color:${color}; font-weight:600">${arg.date.getDate()}</span>` };
             }}
           />
 
