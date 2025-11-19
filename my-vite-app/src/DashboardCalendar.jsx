@@ -32,6 +32,7 @@ function DashboardCalendar() {
   });
   const [customColor, setCustomColor] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentYearMonth, setCurrentYearMonth] = useState(""); // 연월 상태
 
   const [dateListModalOpen, setDateListModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
@@ -177,6 +178,13 @@ function DashboardCalendar() {
       {/* 캘린더 중앙 정렬 */}
       <div className="flex justify-center relative">
         <div style={{ width: "100%", maxWidth: "1300px" }} className="relative">
+
+          {/* 상단 연월 + 일정추가 버튼 */}
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-xl font-bold">{currentYearMonth}</div>
+            <div>{renderCustomAddButton()}</div>
+          </div>
+
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
@@ -200,24 +208,24 @@ function DashboardCalendar() {
             }))}
             headerToolbar={{
               left: "prev,next today",
-              center: "title",
-              right: "" // 버튼은 외부 div에서 처리
+              center: "",
+              right: ""
             }}
-            titleFormat={{ year: 'numeric', month: 'numeric' }} 
+            // 달 변경 시 연월 업데이트
+            datesSet={(arg) => {
+              const y = arg.start.getFullYear();
+              const m = arg.start.getMonth() + 1;
+              setCurrentYearMonth(`${y}년 ${m}월`);
+            }}
             dayCellContent={(arg) => {
-              // 숫자만 표시, 토/일 색상
               const day = arg.date.getDay();
               let color = "";
-              if (day === 0) color = "red"; // 일요일
-              else if (day === 6) color = "blue"; // 토요일
+              if (day === 0) color = "red";
+              else if (day === 6) color = "blue";
               return { html: `<span style="color:${color}; font-weight:600">${arg.date.getDate()}</span>` };
             }}
           />
 
-          {/* 캘린더 우측 상단 일정추가 버튼 */}
-          <div className="absolute top-6 right-6 z-50">
-            {renderCustomAddButton()}
-          </div>
         </div>
       </div>
 
