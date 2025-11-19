@@ -165,7 +165,7 @@ function DashboardCalendar() {
         </div>
       )}
 
-      {/* 상단 버튼 (날짜 input 없음) */}
+      {/* 상단 버튼 */}
       <div className="flex items-center justify-end mb-4">
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -176,7 +176,7 @@ function DashboardCalendar() {
         </button>
       </div>
 
-      {/* 🔥 FullCalendar */}
+      {/* 🔥 FullCalendar (스크롤 제거 / 자동 높이 적용) */}
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
@@ -184,6 +184,11 @@ function DashboardCalendar() {
         selectable={true}
         eventClick={handleEventClick}
         eventDrop={handleEventDrop}
+        expandRows={true}         // 🔥 모든 날짜가 한 화면에 보이도록 자동 확장
+        height="auto"             // 🔥 달력 높이를 자동으로 필요한 만큼만 사용
+        contentHeight="auto"      // 🔥 내부 스크롤 제거
+        dayMaxEventRows={3}
+
         events={events.map((e) => ({
           id: e.id,
           title: e.title,
@@ -194,14 +199,10 @@ function DashboardCalendar() {
           allDay: true,
         }))}
 
-
-        height="auto"               // 🔥 전체 달력 높이를 컨텐츠에 맞게 자동 확장
-        contentHeight="auto"        // 🔥 내부 grid가 스크롤 없이 전체 보이도록 자동 확장
-        
         headerToolbar={{
           left: "prev,next today",
           center: "title",
-          right: "" // ✨ 버튼 제거
+          right: ""
         }}
 
         titleFormat={(date) => {
@@ -213,9 +214,8 @@ function DashboardCalendar() {
         dayCellContent={(arg) => {
           const day = arg.date.getDay();
           let color = "";
-
-          if (day === 0) color = "red"; // 일요일
-          else if (day === 6) color = "blue"; // 토요일
+          if (day === 0) color = "red";
+          else if (day === 6) color = "blue";
 
           return {
             html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>`
@@ -232,7 +232,6 @@ function DashboardCalendar() {
               {modalData.id ? "이벤트 수정" : "새 이벤트"}
             </h2>
 
-            {/* 🔥 일정 추가 시에만 날짜 선택 UI 표시 */}
             {!modalData.id && (
               <div className="mb-3">
                 <label className="mr-2 font-semibold">날짜 선택:</label>
@@ -288,7 +287,6 @@ function DashboardCalendar() {
               />
             </div>
 
-            {/* 버튼 */}
             <div className="flex justify-end space-x-2">
               {modalData.id && (
                 <button
