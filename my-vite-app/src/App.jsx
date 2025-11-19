@@ -361,9 +361,9 @@ function DashboardPage({
     ];
 
     return (
-      <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full max-w-[256px]">
+      <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full max-w-[448px]">
         <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700 text-center">지원기능</h2>
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {allButtons.map((button, index) => {
             if (button.managerOnly && !(isManager || isRegular2)) return null;
             return (
@@ -414,7 +414,7 @@ function DashboardPage({
           <div className="flex flex-col gap-4">
             <UserInfoCard />
             {user.grade === "최고 관리자" && (
-              <div className="bg-white/50 backdrop-blur-md p-2 rounded-lg shadow-md">
+              <div className="bg-white/50 backdrop-blur-md p-2 rounded-lg shadow-md w-full max-w-[320px]">
                 <button
                   onClick={onGoToAdminPanel}
                   className="w-full bg-purple-600 text-white px-4 py-3 rounded-lg font-bold shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105"
@@ -438,8 +438,8 @@ function DashboardPage({
             <div
               style={{
                 width: "100%",
-                minHeight: "600px", // 캘린더 높이 고정
-                maxWidth: "1100px",
+                minHeight: "700px", // 캘린더 높이 고정
+                maxWidth: "1300px",
               }}
             >
               <DashboardCalendar userId={user.id} />
@@ -449,7 +449,7 @@ function DashboardPage({
           {/* 우측 컬럼: 지원기능 + 게시판 */}
           <div className="flex flex-col gap-4">
             <QuickLinksVertical />
-            <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md w-full max-w-[256px]">
+            <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md w-full max-w-[448px]">
               <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
               <ul className="space-y-2">
                 <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
