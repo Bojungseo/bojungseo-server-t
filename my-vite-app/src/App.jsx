@@ -324,7 +324,7 @@ function DashboardPage({
 
   // 사용자 정보 카드
   const UserInfoCard = () => (
-    <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full">
+    <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full max-w-[320px]">
       <h2 className="text-xl font-bold mb-3 border-b pb-2">사용자 정보</h2>
       <div className="flex flex-col space-y-3">
         <div className="p-1 border-b border-gray-100">
@@ -361,7 +361,7 @@ function DashboardPage({
     ];
 
     return (
-      <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-64">
+      <div className="bg-white/50 backdrop-blur-md p-4 rounded-lg shadow-md w-full max-w-[256px]">
         <h2 className="text-xl font-bold mb-3 border-b pb-2 text-gray-700 text-center">지원기능</h2>
         <div className="flex flex-col gap-2">
           {allButtons.map((button, index) => {
@@ -423,7 +423,7 @@ function DashboardPage({
                 </button>
               </div>
             )}
-            <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md">
+            <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md w-full max-w-[320px]">
               <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">공지사항</h2>
               <ul className="space-y-2">
                 <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">필독! 11월 시스템 정기 점검 안내</li>
@@ -449,7 +449,7 @@ function DashboardPage({
           {/* 우측 컬럼: 지원기능 + 게시판 */}
           <div className="flex flex-col gap-4">
             <QuickLinksVertical />
-            <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md">
+            <div className="bg-white/50 backdrop-blur-md p-6 rounded-lg shadow-md w-full max-w-[256px]">
               <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">게시판기능 추가예정</h2>
               <ul className="space-y-2">
                 <li className="p-3 border-b hover:bg-gray-100 cursor-pointer rounded-md">못하는게 아니라 안하는거다.</li>
