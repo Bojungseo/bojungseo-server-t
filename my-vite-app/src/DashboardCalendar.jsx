@@ -33,7 +33,7 @@ function DashboardCalendar() {
   const [customColor, setCustomColor] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
 
-  // 🔹 날짜 클릭 시 리스트 모달
+  // 🔹 날짜 클릭 리스트 모달
   const [dateListModalOpen, setDateListModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
   const [eventsForSelectedDate, setEventsForSelectedDate] = useState([]);
@@ -61,14 +61,7 @@ function DashboardCalendar() {
     return () => unsubscribe();
   }, [currentUserId]);
 
-  // 🔹 일정 추가 버튼
-  const handleAddButtonClick = () => {
-    setModalData({ id: null, title: "", content: "", date: "", color: DEFAULT_COLORS[0] });
-    setCustomColor("");
-    setModalOpen(true);
-  };
-
-  // 🔹 이벤트 클릭
+  // 🔹 기존 이벤트 클릭 → 수정 모달
   const handleEventClick = (info) => {
     const existing = events.find((e) => e.id === info.event.id);
     if (!existing) return;
@@ -177,7 +170,18 @@ function DashboardCalendar() {
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           disabled={!currentUserId}
-          onClick={handleAddButtonClick}
+          onClick={() => {
+            setDateListModalOpen(false); // 리스트 모달 닫기
+            setModalData({
+              id: null,
+              title: "",
+              content: "",
+              date: "",
+              color: DEFAULT_COLORS[0],
+            });
+            setCustomColor("");
+            setModalOpen(true);
+          }}
         >
           일정 추가
         </button>
@@ -299,7 +303,7 @@ function DashboardCalendar() {
 
       {/* 🔹 날짜 클릭 리스트 모달 */}
       {dateListModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-40">
           <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
             <h2 className="text-lg font-bold mb-3">{selectedDate} 일정</h2>
 
@@ -311,6 +315,7 @@ function DashboardCalendar() {
                 <li
                   key={e.id}
                   className="p-2 border rounded cursor-pointer hover:bg-gray-100"
+                  style={{ backgroundColor: e.color, color: "#fff" }}
                   onClick={() => {
                     setModalData({
                       id: e.id,
@@ -321,7 +326,7 @@ function DashboardCalendar() {
                     });
                     setCustomColor("");
                     setModalOpen(true);
-                    setDateListModalOpen(false);
+                    setDateListModalOpen(false); // 🔹 리스트 모달 닫기
                   }}
                 >
                   {e.title}
@@ -348,6 +353,7 @@ function DashboardCalendar() {
                   });
                   setCustomColor("");
                   setModalOpen(true);
+                  setDateListModalOpen(false); // 🔹 리스트 모달 닫기
                 }}
               >
                 일정 추가
