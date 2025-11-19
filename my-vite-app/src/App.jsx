@@ -414,9 +414,9 @@ function DashboardPage({ user, onLogout, onGoToAdminPanel, onGoToMenuPage1, onGo
                         <div
                           className="flex-1"
                           style={{
-                            height: "calc(100vh - 250px)", // 화면 높이에 따라 자동 줄어듦
-                            minHeight: "400px",            // 너무 작아지지 않도록 최소 보장
-                            overflow: "auto",              // 내부 스크롤
+                            minHeight: "400px",   // 최소 보장
+                            height: "auto",       // 자동 확장 → 캘린더가 자연 높이를 가짐
+                            overflow: "visible",  // 내부 스크롤 제거
                           }}
                         >
                           <DashboardCalendar userId={user.id} />
