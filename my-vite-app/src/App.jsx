@@ -435,13 +435,7 @@ function DashboardPage({
 
           {/* 중앙 컬럼: 캘린더 */}
           <div className="flex justify-center">
-            <div
-              style={{
-                width: "100%",
-                minHeight: "700px", // 캘린더 높이 고정
-                maxWidth: "1300px",
-              }}
-            >
+            <div className="w-full min-h-[700px] max-w-none">
               <DashboardCalendar userId={user.id} />
             </div>
           </div>
