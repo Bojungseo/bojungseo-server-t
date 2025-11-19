@@ -194,6 +194,10 @@ function DashboardCalendar() {
           allDay: true,
         }))}
 
+
+        height="auto"               // 🔥 전체 달력 높이를 컨텐츠에 맞게 자동 확장
+        contentHeight="auto"        // 🔥 내부 grid가 스크롤 없이 전체 보이도록 자동 확장
+        
         headerToolbar={{
           left: "prev,next today",
           center: "title",
