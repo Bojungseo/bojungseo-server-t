@@ -33,6 +33,11 @@ function DashboardCalendar() {
   const [customColor, setCustomColor] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
 
+  // 🔹 날짜 클릭 시 리스트 모달
+  const [dateListModalOpen, setDateListModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [eventsForSelectedDate, setEventsForSelectedDate] = useState([]);
+
   // 🔹 Firebase Auth 체크
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((user) => {
@@ -45,7 +50,6 @@ function DashboardCalendar() {
   // 🔹 Firestore 구독
   useEffect(() => {
     if (!currentUserId) return;
-
     const q = query(collection(db, "events"), where("userId", "==", currentUserId));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loaded = snapshot.docs.map((doc) => ({
@@ -54,7 +58,6 @@ function DashboardCalendar() {
       }));
       setEvents(loaded);
     });
-
     return () => unsubscribe();
   }, [currentUserId]);
 
@@ -69,7 +72,6 @@ function DashboardCalendar() {
   const handleEventClick = (info) => {
     const existing = events.find((e) => e.id === info.event.id);
     if (!existing) return;
-
     setModalData({
       id: existing.id,
       title: existing.title,
@@ -81,20 +83,26 @@ function DashboardCalendar() {
     setModalOpen(true);
   };
 
+  // 🔹 날짜 클릭 → 리스트 모달
+  const handleDateClick = (info) => {
+    const dateStr = info.dateStr;
+    setSelectedDate(dateStr);
+    const eventsForDay = events.filter(e => e.start === dateStr);
+    setEventsForSelectedDate(eventsForDay);
+    setDateListModalOpen(true);
+  };
+
   // 🔹 이벤트 저장
   const handleSave = async () => {
     if (!currentUserId) {
       alert("관리자에게 이메일을 요청해주세요.");
       return;
     }
-
     if (!modalData.date) {
       alert("날짜를 선택해주세요.");
       return;
     }
-
     const colorToSave = customColor || modalData.color;
-
     try {
       if (modalData.id) {
         await updateDoc(doc(db, "events", modalData.id), {
@@ -115,6 +123,7 @@ function DashboardCalendar() {
         });
       }
       setModalOpen(false);
+      setDateListModalOpen(false); // 리스트 모달 닫기
     } catch (err) {
       console.error("저장 실패:", err);
       alert("이벤트 저장 실패");
@@ -124,12 +133,11 @@ function DashboardCalendar() {
   // 🔹 이벤트 삭제
   const handleDelete = async () => {
     if (!modalData.id) return;
-
     if (!window.confirm("삭제하시겠습니까?")) return;
-
     try {
       await deleteDoc(doc(db, "events", modalData.id));
       setModalOpen(false);
+      setDateListModalOpen(false);
     } catch (err) {
       console.error("삭제 실패:", err);
       alert("삭제 실패");
@@ -143,7 +151,6 @@ function DashboardCalendar() {
       info.revert();
       return;
     }
-
     try {
       await updateDoc(doc(db, "events", info.event.id), {
         start: info.event.startStr,
@@ -176,19 +183,19 @@ function DashboardCalendar() {
         </button>
       </div>
 
-      {/* 🔥 FullCalendar (스크롤 제거 / 자동 높이 적용) */}
+      {/* 🔥 FullCalendar */}
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         editable={true}
         selectable={true}
         eventClick={handleEventClick}
+        dateClick={handleDateClick}
         eventDrop={handleEventDrop}
-        expandRows={true}         // 🔥 모든 날짜가 한 화면에 보이도록 자동 확장
-        height="auto"             // 🔥 달력 높이를 자동으로 필요한 만큼만 사용
-        contentHeight="auto"      // 🔥 내부 스크롤 제거
+        expandRows={true}
+        height="auto"
+        contentHeight="auto"
         dayMaxEventRows={3}
-
         events={events.map((e) => ({
           id: e.id,
           title: e.title,
@@ -198,39 +205,18 @@ function DashboardCalendar() {
           borderColor: e.color,
           allDay: true,
         }))}
-
         headerToolbar={{
           left: "prev,next today",
           center: "title",
           right: ""
         }}
-
-        titleFormat={(date) => {
-          const y = date.date.year;
-          const m = date.date.month + 1;
-          return `${y}년 ${m}월`;
-        }}
-
-        dayCellContent={(arg) => {
-          const day = arg.date.getDay();
-          let color = "";
-          if (day === 0) color = "red";
-          else if (day === 6) color = "blue";
-
-          return {
-            html: `<span style="color:${color}; font-weight:600">${arg.dayNumberText}</span>`
-          };
-        }}
       />
 
-      {/* 🔥 모달 */}
+      {/* 🔹 일정 추가/수정 모달 */}
       {modalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
-
-            <h2 className="text-lg font-bold mb-3">
-              {modalData.id ? "이벤트 수정" : "새 이벤트"}
-            </h2>
+            <h2 className="text-lg font-bold mb-3">{modalData.id ? "이벤트 수정" : "새 이벤트"}</h2>
 
             {!modalData.id && (
               <div className="mb-3">
@@ -266,9 +252,7 @@ function DashboardCalendar() {
                 <button
                   key={c}
                   style={{ backgroundColor: c }}
-                  className={`w-6 h-6 rounded-full mr-1 border-2 ${
-                    modalData.color === c ? "border-black" : "border-gray-300"
-                  }`}
+                  className={`w-6 h-6 rounded-full mr-1 border-2 ${modalData.color === c ? "border-black" : "border-gray-300"}`}
                   onClick={() => {
                     setModalData({ ...modalData, color: c });
                     setCustomColor("");
@@ -309,11 +293,69 @@ function DashboardCalendar() {
                 저장
               </button>
             </div>
-
           </div>
         </div>
       )}
 
+      {/* 🔹 날짜 클릭 리스트 모달 */}
+      {dateListModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-96 max-h-[80vh] overflow-y-auto">
+            <h2 className="text-lg font-bold mb-3">{selectedDate} 일정</h2>
+
+            <ul className="space-y-2 mb-4">
+              {eventsForSelectedDate.length === 0 && (
+                <li className="text-gray-500">등록된 일정이 없습니다.</li>
+              )}
+              {eventsForSelectedDate.map((e) => (
+                <li
+                  key={e.id}
+                  className="p-2 border rounded cursor-pointer hover:bg-gray-100"
+                  onClick={() => {
+                    setModalData({
+                      id: e.id,
+                      title: e.title,
+                      content: e.content || "",
+                      date: e.start,
+                      color: e.color || DEFAULT_COLORS[0],
+                    });
+                    setCustomColor("");
+                    setModalOpen(true);
+                    setDateListModalOpen(false);
+                  }}
+                >
+                  {e.title}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex justify-end space-x-2">
+              <button
+                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                onClick={() => setDateListModalOpen(false)}
+              >
+                닫기
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={() => {
+                  setModalData({
+                    id: null,
+                    title: "",
+                    content: "",
+                    date: selectedDate,
+                    color: DEFAULT_COLORS[0],
+                  });
+                  setCustomColor("");
+                  setModalOpen(true);
+                }}
+              >
+                일정 추가
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
