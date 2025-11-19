@@ -144,13 +144,7 @@ function DashboardCalendar() {
     }
   };
 
-  // 커스텀 FullCalendar Header (일정추가 버튼 포함)
-  const renderHeaderToolbar = () => ({
-    left: "prev,next today",
-    center: "title",
-    right: "customAddBtn"
-  });
-
+  // 캘린더 우측 상단 일정추가 버튼
   const renderCustomAddButton = () => (
     <button
       className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
@@ -206,7 +200,13 @@ function DashboardCalendar() {
           center: "title",
           right: "" // 커스텀 버튼은 외부 div로 처리
         }}
-        titleFormat={{ year: 'numeric', month: 'numeric' }} // 연도, 월 숫자 표시
+        titleFormat={() => {
+          const today = new Date();
+          const y = today.getFullYear();
+          const m = today.getMonth() + 1;
+          return `${y}년 ${m}월`;
+        }}
+        locale="ko"
         dayCellContent={(arg) => {
           const day = arg.date.getDay();
           let color = "";
