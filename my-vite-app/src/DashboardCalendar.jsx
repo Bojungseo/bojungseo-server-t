@@ -20,8 +20,7 @@ const DEFAULT_COLORS = [
   "#14B8A6", "#F472B6", "#FCD34D", "#A78BFA", "#60A5FA"
 ];
 
-const HOLIDAY_API_KEY =
-  "c7745b47339ea22a7069fa3dae3aff8930f65da92c6dddf1e9e1a5948cba605c";
+const HOLIDAY_API_KEY = "c7745b47339ea22a7069fa3dae3aff8930f65da92c6dddf1e9e1a5948cba605c";
 
 // ------------------------------------------------
 // 🔥 대한민국 공휴일 불러오는 함수
